@@ -1,0 +1,10 @@
+<svg width="16" height="17" viewBox="0 0 16 17" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<defs>
+		<!-- Gradient per request: linear-gradient(90deg, #00C0FF 0%, #5558FF 100%) -->
+		<linearGradient id="institutionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+			<stop offset="0%" stop-color="#00C0FF"/>
+			<stop offset="100%" stop-color="#5558FF"/>
+		</linearGradient>
+	</defs>
+	<path d="M2.79158 13.1666V6.91664H4.04158V13.1666H2.79158ZM7.37491 13.1666V6.91664H8.62491V13.1666H7.37491ZM0.307617 16.0833V14.8333H15.6922V16.0833H0.307617ZM11.9582 13.1666V6.91664H13.2082V13.1666H11.9582ZM0.307617 5.24997V4.06414L7.99991 0.298096L15.6922 4.06414V5.24997H0.307617ZM3.26262 3.99997H12.7372L7.99991 1.7083L3.26262 3.99997Z" fill="url(#institutionGradient)"/>
+</svg>

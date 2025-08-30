@@ -12,6 +12,10 @@ import {
   Users,
   Key,
   UserCheck,
+  ArrowLeft,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +30,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 // import { Checkbox } from "@/components/ui/checkbox";
 
 // Types
@@ -157,6 +169,10 @@ export default function RolesPage() {
     inactive: 0,
     totalUsers: 0,
   });
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const [formData, setFormData] = useState<RoleFormData>({
     name: "",
@@ -326,6 +342,27 @@ export default function RolesPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // Pagination logic
+  const totalPages = Math.ceil(filteredRoles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRoles = filteredRoles.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, itemsPerPage]);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle items per page change
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(parseInt(value));
+  };
+
   // Handle role actions
   const handleRoleAction = async (
     roleId: string,
@@ -405,47 +442,68 @@ export default function RolesPage() {
     {} as Record<string, typeof availablePermissions>,
   );
 
+  function AccordionSection({
+    title,
+    children,
+    defaultOpen = false,
+  }: {
+    title: string;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+  }) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+      <div className="rounded-lg border bg-white">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left"
+        >
+          <span className="font-medium text-sm sm:text-base text-gray-900">
+            {title}
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 text-gray-500 transition-transform ${
+              open ? "rotate-180" : "rotate-0"
+            }`}
+          />
+        </button>
+        {open && <div className="px-4 sm:px-6 pb-5">{children}</div>}
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 min-h-[calc(100vh-125px)]">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           {viewMode === "detail" ? (
             <div className="flex items-center gap-4">
               <Button variant="ghost" onClick={handleBackToList}>
-                <X className="mr-2 h-4 w-4" />
-                Back to List
+                <ArrowLeft className="mr-2 h-4 w-4" />
               </Button>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">
+                <h1 className="text-2xl text-neutral-700 font-semibold tracking-tight">
                   Role Details
                 </h1>
-                <p className="text-muted-foreground">
-                  Viewing details for &quot;{selectedRole?.name}&quot;
-                </p>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">
-                  Roles & Permissions
-                </h1>
-                <p className="text-muted-foreground">
-                  Manage user roles and their permissions across the platform.
-                </p>
-              </div>
-
               {/* Filter Buttons */}
               <div className="flex flex-wrap items-center gap-2">
+                <h1 className=" text-lg text-neutral-700 mr-4">
+                  All Roles
+                </h1>
                 <Button
                   variant={statusFilter === "ALL" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setStatusFilter("ALL")}
                   className={
                     statusFilter === "ALL"
-                      ? "bg-orange-500 hover:bg-orange-600"
-                      : ""
+                      ? "bg-brand-gradient text-white rounded-full"
+                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
                   }
                 >
                   All ({stats.total})
@@ -456,8 +514,8 @@ export default function RolesPage() {
                   onClick={() => setStatusFilter("ACTIVE")}
                   className={
                     statusFilter === "ACTIVE"
-                      ? "bg-orange-500 hover:bg-orange-600"
-                      : ""
+                      ? "bg-brand-gradient text-white rounded-full"
+                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
                   }
                 >
                   Active ({stats.active})
@@ -468,8 +526,8 @@ export default function RolesPage() {
                   onClick={() => setStatusFilter("INACTIVE")}
                   className={
                     statusFilter === "INACTIVE"
-                      ? "bg-orange-500 hover:bg-orange-600"
-                      : ""
+                      ? "bg-brand-gradient text-white rounded-full"
+                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
                   }
                 >
                   Inactive ({stats.inactive})
@@ -513,7 +571,7 @@ export default function RolesPage() {
 
       {/* Create Role Form */}
       {showCreateForm && (
-        <Card>
+        <Card className="py-0">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Create New Role</CardTitle>
             <Button
@@ -650,18 +708,9 @@ export default function RolesPage() {
       {!showCreateForm && (
         <>
           {viewMode === "list" ? (
-            <Card>
+            <Card className="py-0">
               <CardContent className="p-0">
-                {/* Table Header - Hidden on mobile, shown as cards instead */}
-                <div className="hidden lg:grid lg:grid-cols-12 gap-4 p-4 bg-brand-gradient border-b rounded-md font-medium text-sm text-white m-2">
-                  <div className="col-span-1">Icon</div>
-                  <div className="col-span-3">Role Name</div>
-                  <div className="col-span-3">Description</div>
-                  <div className="col-span-2">Users</div>
-                  <div className="col-span-1">Status</div>
-                  <div className="col-span-1">Created</div>
-                  <div className="col-span-1">Actions</div>
-                </div>
+
 
                 {/* Loading State */}
                 {loading && (
@@ -704,221 +753,164 @@ export default function RolesPage() {
                         </p>
                       </div>
                     ) : (
-                      <div>
-                        {filteredRoles.map((role, index) => (
-                          <div key={role.id}>
-                            {/* Desktop Table Row */}
-                            <div
-                              className={`hidden lg:grid lg:grid-cols-12 gap-4 p-4 items-center hover:bg-gray-50 transition-colors ${
-                                index !== filteredRoles.length - 1
-                                  ? "border-b"
-                                  : ""
-                              }`}
-                            >
-                              {/* Icon Column */}
-                              <div className="col-span-1">
-                                <div className="w-12 h-12 bg-orange-100 rounded-md flex items-center justify-center">
-                                  <Shield className="h-6 w-6 text-orange-600" />
-                                </div>
-                              </div>
-
-                              {/* Role Name Column */}
-                              <div className="col-span-3">
-                                <h3 className="font-semibold text-base text-gray-900 mb-1">
-                                  {role.name}
-                                </h3>
-                                <div className="flex flex-wrap gap-1">
-                                  {role.permissions
-                                    .slice(0, 2)
-                                    .map((permission) => (
-                                      <span
-                                        key={permission}
-                                        className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600"
-                                      >
-                                        {availablePermissions.find(
-                                          (p) => p.id === permission,
-                                        )?.name || permission}
-                                      </span>
-                                    ))}
-                                  {role.permissions.length > 2 && (
-                                    <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-                                      +{role.permissions.length - 2} more
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Description Column */}
-                              <div className="col-span-3">
-                                <p className="text-sm text-gray-600 line-clamp-2">
-                                  {role.description}
-                                </p>
-                              </div>
-
-                              {/* Users Column */}
-                              <div className="col-span-2">
-                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                  <Users className="h-4 w-4 flex-shrink-0" />
-                                  <span>{role.userCount} users</span>
-                                </div>
-                              </div>
-
-                              {/* Status Column */}
-                              <div className="col-span-1">
-                                <Badge variant={getStatusColor(role.status)}>
-                                  {role.status}
-                                </Badge>
-                              </div>
-
-                              {/* Created Column */}
-                              <div className="col-span-1">
-                                <div className="text-sm text-gray-600">
-                                  {formatDate(role.createdAt)}
-                                </div>
-                              </div>
-
-                              {/* Actions Column */}
-                              <div className="col-span-1">
-                                <div className="flex items-center gap-1">
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() =>
-                                      handleRoleAction(role.id, "view")
-                                    }
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() =>
-                                      handleRoleAction(role.id, "edit")
-                                    }
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Mobile Card Layout */}
-                            <div
-                              className={`lg:hidden p-4 hover:bg-gray-50 transition-colors ${
-                                index !== filteredRoles.length - 1
-                                  ? "border-b"
-                                  : ""
-                              }`}
-                            >
-                              <div className="flex items-start space-x-4">
-                                {/* Icon */}
-                                <div className="flex-shrink-0">
-                                  <div className="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center">
-                                    <Shield className="h-8 w-8 text-orange-600" />
-                                  </div>
-                                </div>
-
-                                {/* Role Details */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <h3 className="font-semibold text-lg text-gray-900 truncate pr-2">
+                      <div className="rounded-lg border overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-gray-100">
+                                <TableHead className="text-gray-900 min-w-[200px] px-4">
+                                  Role Name
+                                </TableHead>
+                                <TableHead className="text-gray-900 min-w-[120px] px-4">
+                                  Assigned Users
+                                </TableHead>
+                                <TableHead className="text-gray-900 min-w-[250px] px-4">
+                                  Permission Summary
+                                </TableHead>
+                                <TableHead className="text-gray-900 text-right min-w-[100px] px-4">
+                                  Actions
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedRoles.map((role) => (
+                                <TableRow
+                                  key={role.id}
+                                  className="hover:bg-gray-50"
+                                >
+                                  {/* Role Name Column */}
+                                  <TableCell className="px-4">
+                                    <h3 className="text-base text-gray-900">
                                       {role.name}
                                     </h3>
-                                    <Badge
-                                      variant={getStatusColor(role.status)}
-                                      className="flex-shrink-0"
-                                    >
-                                      {role.status}
-                                    </Badge>
-                                  </div>
+                                  </TableCell>
 
-                                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">
-                                    {role.description}
-                                  </p>
-
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
-                                    <div className="flex items-center text-sm text-gray-600">
-                                      <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+                                  {/* Assigned Users Column */}
+                                  <TableCell className="px-4">
+                                    <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                      <Users className="h-4 w-4 flex-shrink-0" />
                                       <span>{role.userCount} users</span>
                                     </div>
-                                    <div className="flex items-center text-sm text-gray-600">
-                                      <Key className="h-4 w-4 mr-2 flex-shrink-0" />
-                                      <span>
-                                        {role.permissions.length} permissions
-                                      </span>
-                                    </div>
-                                  </div>
+                                  </TableCell>
 
-                                  <div className="flex flex-wrap gap-1 mb-4">
-                                    {role.permissions
-                                      .slice(0, 3)
-                                      .map((permission) => (
-                                        <span
-                                          key={permission}
-                                          className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600"
-                                        >
-                                          {availablePermissions.find(
-                                            (p) => p.id === permission,
-                                          )?.name || permission}
-                                        </span>
-                                      ))}
-                                    {role.permissions.length > 3 && (
-                                      <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">
-                                        +{role.permissions.length - 3} more
-                                      </span>
-                                    )}
-                                  </div>
+                                  {/* Permission Summary Column */}
+                                  <TableCell className="px-4">
+                                    <p className="text-sm text-gray-600 line-clamp-2">
+                                      {role.description}
+                                    </p>
+                                  </TableCell>
 
-                                  <div className="flex gap-2">
+                                  {/* Actions Column */}
+                                  <TableCell className="text-right px-4">
                                     <Button
                                       size="sm"
                                       onClick={() =>
                                         handleRoleAction(role.id, "view")
                                       }
-                                      className="bg-orange-500 text-white hover:bg-orange-600"
+                                      className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
                                     >
-                                      View Details
+                                      View
                                     </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={() =>
-                                        handleRoleAction(role.id, "edit")
-                                      }
-                                    >
-                                      Edit
-                                    </Button>
-                                    {role.name !== "Super Admin" && (
-                                      <Button
-                                        size="sm"
-                                        variant="outline"
-                                        onClick={() =>
-                                          handleRoleAction(role.id, "delete")
-                                        }
-                                        className="text-red-600 hover:text-red-900"
-                                      >
-                                        Delete
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
                       </div>
                     )}
 
-                    {/* Summary */}
+                    {/* Pagination and Summary */}
                     {filteredRoles.length > 0 && (
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-gray-50 border-t text-sm text-muted-foreground">
-                        <div>
-                          Showing {filteredRoles.length} of {roles.length} roles
+                      <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
+                        {/* Summary */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-muted-foreground">
+                          <div>
+                            Showing {startIndex + 1}-{Math.min(endIndex, filteredRoles.length)} of{" "}
+                            {filteredRoles.length} roles
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                            <span>Total: {stats.total}</span>
+                            <span>Active: {stats.active}</span>
+                            <span>Users: {stats.totalUsers}</span>
+                          </div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                          <span>Total: {stats.total}</span>
-                          <span>Active: {stats.active}</span>
-                          <span>Users: {stats.totalUsers}</span>
+
+                        {/* Pagination Controls */}
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                          {/* Items per page selector */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">Showing:</span>
+                            <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                              <SelectTrigger className="w-20">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="5">5</SelectItem>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="25">25</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="100">100</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <span className="text-sm text-muted-foreground">of {filteredRoles.length} roles</span>
+                          </div>
+
+                          {/* Page navigation */}
+                          {totalPages > 1 && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                disabled={currentPage === 1}
+                              >
+                                <ChevronLeft className="h-4 w-4" />
+                                Previous
+                              </Button>
+
+                              <div className="flex items-center gap-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                  let pageNumber;
+                                  if (totalPages <= 5) {
+                                    pageNumber = i + 1;
+                                  } else if (currentPage <= 3) {
+                                    pageNumber = i + 1;
+                                  } else if (currentPage >= totalPages - 2) {
+                                    pageNumber = totalPages - 4 + i;
+                                  } else {
+                                    pageNumber = currentPage - 2 + i;
+                                  }
+
+                                  return (
+                                    <Button
+                                      key={pageNumber}
+                                      variant={currentPage === pageNumber ? "default" : "outline"}
+                                      size="sm"
+                                      onClick={() => handlePageChange(pageNumber)}
+                                      className={
+                                        currentPage === pageNumber
+                                          ? "bg-brand-gradient text-white"
+                                          : ""
+                                      }
+                                    >
+                                      {pageNumber}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                              >
+                                Next
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -929,39 +921,25 @@ export default function RolesPage() {
           ) : (
             /* Role Detail View */
             selectedRole && (
-              <Card>
+              <Card className="py-0">
                 <CardContent className="p-8">
                   <div className="space-y-8">
                     {/* Header Section */}
                     <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-6">
+                      <div className="flex items-center gap-6">
                         {/* Icon */}
-                        <div className="w-24 h-24 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <div className="w-20 h-20 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
                           <Shield className="h-12 w-12 text-orange-600" />
                         </div>
 
                         {/* Role Info */}
                         <div className="flex-1">
-                          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+                          <h1 className="text-3xl font-semibold text-gray-900 mb-2">
                             {selectedRole.name}
                           </h1>
                           <p className="text-xl text-gray-600 mb-4">
-                            {selectedRole.description}
+                            Role
                           </p>
-                          <div className="flex items-center gap-6 text-sm text-gray-600">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              <span>
-                                {selectedRole.userCount} users assigned
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Key className="h-4 w-4" />
-                              <span>
-                                {selectedRole.permissions.length} permissions
-                              </span>
-                            </div>
-                          </div>
                         </div>
                       </div>
                       <Badge
@@ -972,69 +950,90 @@ export default function RolesPage() {
                       </Badge>
                     </div>
 
-                    {/* Permissions */}
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                        Permissions
-                      </h3>
-                      <div className="space-y-4">
-                        {Object.entries(groupedPermissions).map(
-                          ([category, permissions]) => {
-                            const rolePermissions = permissions.filter((p) =>
-                              selectedRole.permissions.includes(p.id),
-                            );
-
-                            if (rolePermissions.length === 0) return null;
-
-                            return (
-                              <div key={category}>
-                                <h4 className="font-medium text-sm text-gray-700 mb-2">
-                                  {category}
-                                </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                  {rolePermissions.map((permission) => (
-                                    <div
-                                      key={permission.id}
-                                      className="flex items-center gap-3 p-2 bg-white rounded border"
-                                    >
-                                      <Key className="h-4 w-4 text-gray-400" />
-                                      <div>
-                                        <p className="font-medium text-sm">
-                                          {permission.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                          {permission.description}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
+                    {/* Accordion sections */}
+                    <div className="space-y-3">
+                      <AccordionSection title="Overview" defaultOpen>
+                        <div className="grid md:grid-cols-2 gap-6">
+                          <div className="space-y-3">
+                            <div className="flex items-center gap-3">
+                              <Shield className="h-5 w-5 text-gray-400" />
+                              <div>
+                                <p className="text-sm text-gray-600">Role Name</p>
+                                <p className="font-medium">{selectedRole.name}</p>
                               </div>
-                            );
-                          },
-                        )}
-                      </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Users className="h-5 w-5 text-gray-400" />
+                              <div>
+                                <p className="text-sm text-gray-600">Users Assigned</p>
+                                <p className="font-medium">{selectedRole.userCount} users</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex justify-between"><span className="text-gray-600">Status</span><Badge variant={getStatusColor(selectedRole.status)}>{selectedRole.status}</Badge></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Permissions</span><span>{selectedRole.permissions.length} permissions</span></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Created</span><span>{formatDate(selectedRole.createdAt)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Updated</span><span>{formatDate(selectedRole.updatedAt)}</span></div>
+                          </div>
+                        </div>
+                      </AccordionSection>
+
+                      <AccordionSection title="Description">
+                        <div className="prose prose-sm max-w-none">
+                          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
+                            {selectedRole.description}
+                          </div>
+                        </div>
+                      </AccordionSection>
+
+                      <AccordionSection title="Permissions">
+                        <div className="space-y-4">
+                          {Object.entries(groupedPermissions).map(
+                            ([category, permissions]) => {
+                              const rolePermissions = permissions.filter((p) =>
+                                selectedRole.permissions.includes(p.id),
+                              );
+
+                              if (rolePermissions.length === 0) return null;
+
+                              return (
+                                <div key={category}>
+                                  <h4 className="font-medium text-sm text-gray-700 mb-3">
+                                    {category}
+                                  </h4>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {rolePermissions.map((permission) => (
+                                      <div
+                                        key={permission.id}
+                                        className="flex items-center gap-3 p-3 bg-white rounded border"
+                                      >
+                                        <Key className="h-4 w-4 text-gray-400" />
+                                        <div>
+                                          <p className="font-medium text-sm">
+                                            {permission.name}
+                                          </p>
+                                          <p className="text-xs text-gray-500">
+                                            {permission.description}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            },
+                          )}
+                        </div>
+                      </AccordionSection>
                     </div>
 
-                    {/* Meta Information */}
-                    <div className="bg-gray-50 rounded-lg p-6">
-                      <h3 className="text-lg font-semibold mb-4 text-gray-900">
-                        Role Information
-                      </h3>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm text-gray-600">Created Date</p>
-                          <p className="font-medium">
-                            {formatDate(selectedRole.createdAt)}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-600">Last Updated</p>
-                          <p className="font-medium">
-                            {formatDate(selectedRole.updatedAt)}
-                          </p>
-                        </div>
-                      </div>
+                    {/* Actions */}
+                    <div className="flex justify-end gap-4 pt-6 border-t">
+                      <Button variant="outline" onClick={handleBackToList}>
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back to List
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
 import {
   Plus,
   Search,
@@ -11,7 +10,6 @@ import {
   User,
   FileText,
   ArrowLeft,
-  ExternalLink,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -680,9 +678,6 @@ export default function BlogsPage() {
                           <Table>
                             <TableHeader>
                               <TableRow className="bg-gray-100">
-                                <TableHead className="text-gray-900 min-w-[80px] px-4">
-                                  Image
-                                </TableHead>
                                 <TableHead className="text-gray-900 min-w-[250px] px-4">
                                   Title
                                 </TableHead>
@@ -693,7 +688,7 @@ export default function BlogsPage() {
                                   Status
                                 </TableHead>
                                 <TableHead className="text-gray-900 min-w-[120px] px-4">
-                                  Date
+                                  Published
                                 </TableHead>
                                 <TableHead className="text-gray-900 text-right min-w-[100px] px-4">
                                   Actions
@@ -706,12 +701,7 @@ export default function BlogsPage() {
                                   key={blog.id}
                                   className="hover:bg-gray-50"
                                 >
-                                  {/* Image Column */}
-                                  <TableCell className="px-4">
-                                    <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center">
-                                      <FileText className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  </TableCell>
+
 
                                   {/* Title Column */}
                                   <TableCell className="px-4">
@@ -741,7 +731,7 @@ export default function BlogsPage() {
                                     </Badge>
                                   </TableCell>
 
-                                  {/* Date Column */}
+                                  {/* Published Column */}
                                   <TableCell className="px-4">
                                     <div className="text-sm text-gray-600">
                                       {blog.publishedDate
@@ -773,19 +763,7 @@ export default function BlogsPage() {
                     {/* Pagination and Summary */}
                     {filteredBlogs.length > 0 && (
                       <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
-                        {/* Summary */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-muted-foreground">
-                          <div>
-                            Showing {startIndex + 1}-{Math.min(endIndex, filteredBlogs.length)} of{" "}
-                            {filteredBlogs.length} blog posts
-                          </div>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                            <span>Total: {stats.total}</span>
-                            <span>Published: {stats.published}</span>
-                            <span>Drafts: {stats.drafts}</span>
-                            <span>Archived: {stats.archived}</span>
-                          </div>
-                        </div>
+                        
 
                         {/* Pagination Controls */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

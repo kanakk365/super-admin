@@ -2,32 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Shield, Edit2, Save, X, Camera } from "lucide-react";
+import { Edit2, Save, X, Camera } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getUserFromToken, isAuthenticated } from "@/lib/jwt-utils";
 import type { User as UserType } from "@/lib/types";
 
-/**
- * Profile Page Component
- *
- * This component displays and allows editing of user profile information.
- * Instead of using mock data, it now retrieves real user data from the JWT token
- * stored in localStorage after login.
- *
- * Key features:
- * - Fetches user data from JWT token payload
- * - Persists profile updates in localStorage (since /me API endpoint is not implemented)
- * - Handles authentication state and redirects to login if not authenticated
- * - Shows loading states and error handling
- */
+type ExtendedUser = UserType & { phone?: string; password?: string };
+
 export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState<UserType | null>(null);
-  const [editedUser, setEditedUser] = useState<UserType | null>(null);
+  const [user, setUser] = useState<ExtendedUser | null>(null);
+  const [editedUser, setEditedUser] = useState<ExtendedUser | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -48,7 +36,7 @@ export default function Profile() {
         try {
           const parsedProfile = JSON.parse(storedProfile);
           // Merge token data with stored profile updates
-          const mergedUserData = { ...userData, ...parsedProfile };
+          const mergedUserData: ExtendedUser = { ...userData, ...parsedProfile };
           setUser(mergedUserData);
           setEditedUser(mergedUserData);
         } catch (error) {
@@ -58,8 +46,9 @@ export default function Profile() {
         }
       } else {
         // Use data directly from JWT token payload
-        setUser(userData);
-        setEditedUser(userData);
+        const extended: ExtendedUser = { ...userData };
+        setUser(extended);
+        setEditedUser(extended);
       }
     } else {
       router.push("/login");
@@ -78,7 +67,7 @@ export default function Profile() {
       // TODO: When /me API endpoint is implemented, replace this with:
       // await apiClient.updateProfile(editedUser);
 
-      const updatedUser = { ...user, ...editedUser };
+      const updatedUser: ExtendedUser = { ...user, ...editedUser };
       setUser(updatedUser);
       setIsEditing(false);
 
@@ -138,86 +127,53 @@ export default function Profile() {
       .slice(0, 2);
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Not available";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatDateTime = (dateString?: string) => {
-    if (!dateString) return "Not available";
-    return new Date(dateString).toLocaleString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  // helpers reserved for future metadata; keeping page lean for now
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-          <p className="text-muted-foreground">
-            Manage your account settings and information
-          </p>
-        </div>
-        <div className="flex space-x-2">
-          {isEditing ? (
-            <>
+    <div className="space-y-6 min-h-[calc(100vh-125px)]">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Profile details</CardTitle>
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCancel}
+                  disabled={saving}
+                >
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-brand-gradient text-white hover:opacity-90"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+              </>
+            ) : (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleCancel}
-                disabled={saving}
+                onClick={() => setIsEditing(true)}
               >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
+                <Edit2 className="h-4 w-4 mr-2" />
+                Edit
               </Button>
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-brand-gradient hover:opacity-90"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {saving ? "Saving..." : "Save"}
-              </Button>
-            </>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit Profile
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Profile Overview */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <User className="h-5 w-5" />
-            <span>Profile Overview</span>
-          </CardTitle>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="flex items-start space-x-6">
-            {/* Avatar */}
+          <div className="flex items-start gap-6">
             <div className="relative">
-              <Avatar className="h-24 w-24">
+              <Avatar className="h-16 w-16">
                 <AvatarImage src="" alt={user.name} />
-                <AvatarFallback className="text-lg font-semibold bg-brand-gradient text-white">
+                <AvatarFallback className="font-semibold bg-brand-gradient text-white">
                   {getInitials(user.name || user.firstName)}
                 </AvatarFallback>
               </Avatar>
@@ -232,151 +188,91 @@ export default function Profile() {
               )}
             </div>
 
-            {/* Basic Info */}
-            <div className="flex-1 space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Name
-                  </label>
-                  {isEditing ? (
-                    <Input
-                      value={editedUser?.name || editedUser?.firstName || ""}
-                      onChange={(e) =>
-                        setEditedUser({ ...editedUser!, name: e.target.value })
-                      }
-                      placeholder="Enter your name"
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="text-lg font-semibold mt-1">
-                      {user.name ||
-                        `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
-                        "Not provided"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Role
-                  </label>
-                  <div className="mt-1">
-                    <Badge
-                      variant="secondary"
-                      className="bg-gradient-to-r from-orange-100 to-red-100 text-orange-800 border-orange-200"
-                    >
-                      <Shield className="h-3 w-3 mr-1" />
-                      {user.role || "Super Admin"}
-                    </Badge>
+            <div className="flex-1 grid gap-6 md:grid-cols-3">
+              <div>
+                <div className="text-sm text-muted-foreground">Name</div>
+                {isEditing ? (
+                  <Input
+                    value={editedUser?.name || editedUser?.firstName || ""}
+                    onChange={(e) =>
+                      setEditedUser({ ...editedUser!, name: e.target.value })
+                    }
+                    placeholder="Enter your name"
+                    className="mt-1"
+                  />
+                ) : (
+                  <div className="mt-1 font-medium">
+                    {user.name ||
+                      `${user.firstName || ""} ${user.lastName || ""}`.trim() ||
+                      "Super Admin"}
                   </div>
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Email
-                  </label>
-                  {isEditing ? (
-                    <Input
-                      value={editedUser?.email || ""}
-                      onChange={(e) =>
-                        setEditedUser({ ...editedUser!, email: e.target.value })
-                      }
-                      placeholder="Enter your email"
-                      type="email"
-                      className="mt-1"
-                    />
-                  ) : (
-                    <p className="flex items-center mt-1">
-                      <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-                      {user.email || "Not provided"}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">
-                    Status
-                  </label>
-                  <div className="mt-1">
-                    <Badge
-                      variant={user.isActive ? "default" : "secondary"}
-                      className={user.isActive ? "bg-green-500" : ""}
-                    >
-                      {user.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                </div>
+                )}
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Account Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Shield className="h-5 w-5" />
-            <span>Account Information</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">
-                User ID
-              </label>
-              <p className="mt-1 font-mono text-sm">
-                {user.id || "Not available"}
-              </p>
-            </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Email ID</div>
+                {isEditing ? (
+                  <Input
+                    type="email"
+                    value={editedUser?.email || ""}
+                    onChange={(e) =>
+                      setEditedUser({ ...editedUser!, email: e.target.value })
+                    }
+                    placeholder="Enter your email"
+                    className="mt-1"
+                  />
+                ) : (
+                  <div className="mt-1 font-medium">{user.email || "admin@superadmin.com"}</div>
+                )}
+              </div>
 
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">
-                Account Created
-              </label>
-              <p className="mt-1">{formatDate(user.createdAt)}</p>
-            </div>
+              <div>
+                <div className="text-sm text-muted-foreground">Password</div>
+                {isEditing ? (
+                  <Input
+                    type="password"
+                    value={editedUser?.password || ""}
+                    onChange={(e) =>
+                      setEditedUser({ ...editedUser!, password: e.target.value })
+                    }
+                    placeholder="Update password"
+                    className="mt-1"
+                  />
+                ) : (
+                  <div className="mt-1 font-medium tracking-widest">
+                    {editedUser?.password ? "••••••••" : "••••••••"}
+                  </div>
+                )}
+              </div>
 
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">
-                Last Updated
-              </label>
-              <p className="mt-1">{formatDateTime(user.updatedAt)}</p>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">
-                Last Login
-              </label>
-              <p className="mt-1">{formatDateTime(user.loginTime)}</p>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">
-                Account Status
-              </label>
-              <div className="mt-1 flex space-x-2">
-                <Badge
-                  variant={user.isActive ? "default" : "secondary"}
-                  className={user.isActive ? "bg-green-500" : ""}
-                >
-                  {user.isActive ? "Active" : "Inactive"}
-                </Badge>
-                {!user.isDeleted && (
-                  <Badge
-                    variant="outline"
-                    className="border-green-500 text-green-700"
-                  >
-                    Valid
-                  </Badge>
+              <div className="md:col-span-1">
+                <div className="text-sm text-muted-foreground">Phone number</div>
+                {isEditing ? (
+                  <Input
+                    value={editedUser?.phone || ""}
+                    onChange={(e) =>
+                      setEditedUser({ ...editedUser!, phone: e.target.value })
+                    }
+                    placeholder="Enter your phone number"
+                    className="mt-1"
+                  />
+                ) : (
+                  <div className="mt-1 font-medium">{user.phone || "+1 (555) 123-4567"}</div>
                 )}
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button
+          className="bg-brand-gradient text-white px-8"
+          onClick={() => router.push("/logout")}
+        >
+          Logout
+        </Button>
+      </div>
     </div>
   );
 }

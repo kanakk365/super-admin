@@ -571,73 +571,87 @@ export default function RolesPage() {
 
       {/* Create Role Form */}
       {showCreateForm && (
-        <Card className="py-0">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Create New Role</CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowCreateForm(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <Card className="max-w-7xl mx-auto">
+          <CardHeader className="text-left pb-6">
+            <CardTitle className="text-xl font-semibold text-gray-900">
+              Create a new role
+            </CardTitle>
+            <div className="w-full h-px bg-gray-200 mt-4"></div>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreateRole} className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Role Name *</Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter role name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    required
-                  />
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  {/* Role Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                      Role Name
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="Enter role name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                      Status
+                    </Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value: "ACTIVE" | "INACTIVE") =>
+                        setFormData((prev) => ({ ...prev, status: value }))
+                      }
+                    >
+                      <SelectTrigger className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ACTIVE">Active</SelectItem>
+                        <SelectItem value="INACTIVE">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: "ACTIVE" | "INACTIVE") =>
-                      setFormData((prev) => ({ ...prev, status: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ACTIVE">Active</SelectItem>
-                      <SelectItem value="INACTIVE">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="text-sm font-medium text-gray-700">
+                      Description
+                    </Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Enter role description"
+                      className="min-h-[100px] bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: e.target.value,
+                        }))
+                      }
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Enter role description"
-                  className="min-h-[80px]"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  required
-                />
-              </div>
-
+              {/* Permissions Section */}
               <div className="space-y-4">
-                <Label>Permissions</Label>
+                <Label className="text-sm font-medium text-gray-700">Permissions</Label>
                 <div className="space-y-6">
                   {Object.entries(groupedPermissions).map(
                     ([category, permissions]) => (
@@ -672,31 +686,34 @@ export default function RolesPage() {
               </div>
 
               {error && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
                   {error}
                 </div>
               )}
 
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" disabled={createLoading}>
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                  className="h-10 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createLoading}
+                  className="h-10 bg-orange-600 text-white border-orange-600 hover:bg-orange-700 hover:border-orange-700"
+                >
                   {createLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Creating...
                     </>
                   ) : (
-                    <>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Role
-                    </>
+                    "Create role"
                   )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCreateForm(false)}
-                >
-                  Cancel
                 </Button>
               </div>
             </form>

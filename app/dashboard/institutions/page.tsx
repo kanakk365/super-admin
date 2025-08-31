@@ -540,186 +540,276 @@ export default function InstitutionsPage() {
 
       {/* Create Institution Form */}
       {showCreateForm && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Create New Institution</CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowCreateForm(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <Card className="max-w-7xl mx-auto">
+          <CardHeader className="text-left pb-6">
+            <CardTitle className="text-xl font-semibold text-gray-900">
+              Register a new school/institution
+            </CardTitle>
+            <div className="w-full h-px bg-gray-200 mt-4"></div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateInstitution} className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Institution Name *</Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter institution name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        name: e.target.value,
-                      }))
-                    }
-                    required
-                  />
+            <form onSubmit={handleCreateInstitution} className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  {/* Institution name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                      Institution name
+                    </Label>
+                    <Input
+                      id="name"
+                      placeholder="Name of the Institute"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Affiliated Board/University */}
+                  <div className="space-y-2">
+                    <Label htmlFor="affiliatedBoard" className="text-sm font-medium text-gray-700">
+                      Affiliated Board/University
+                    </Label>
+                    <Input
+                      id="affiliatedBoard"
+                      placeholder="Enter affiliated board"
+                      value={formData.affiliatedBoard}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          affiliatedBoard: e.target.value,
+                        }))
+                      }
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Official Phone Number / Landline */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                      Official Phone Number / Landline
+                    </Label>
+                    <Input
+                      id="phone"
+                      placeholder="Type contact no."
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Year of Establishment (optional) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="yearOfEstablishment" className="text-sm font-medium text-gray-700">
+                      Year of Establishment (optional)
+                    </Label>
+                    <Input
+                      id="yearOfEstablishment"
+                      placeholder="Enter year of establishment"
+                      value={formData.yearOfEstablishment}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          yearOfEstablishment: e.target.value,
+                        }))
+                      }
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Upload Proof of Institution */}
+                  <div className="space-y-2">
+                    <Label htmlFor="proofOfInstitution" className="text-sm font-medium text-gray-700">
+                      Upload Proof of Institution
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="proofOfInstitution"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        onChange={(e) =>
+                          handleFileChange(
+                            "proofOfInstitution",
+                            e.target.files?.[0] || null
+                          )
+                        }
+                        className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                        placeholder="e.g., affiliation certificate, recognition letter"
+                      />
+                      <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    </div>
+                    {formData.proofOfInstitution && (
+                      <p className="text-xs text-gray-500">
+                        Selected: {formData.proofOfInstitution.name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Institution Address */}
+                  <div className="space-y-2">
+                    <Label htmlFor="address" className="text-sm font-medium text-gray-700">
+                      Institution Address
+                    </Label>
+                    <Textarea
+                      id="address"
+                      placeholder="Type address info"
+                      className="min-h-[100px] bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          address: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Type</Label>
-                  <Input
-                    id="type"
-                    placeholder="e.g., University, College, School"
-                    value={formData.type}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        type: e.target.value,
-                      }))
-                    }
-                  />
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {/* Type of Institution */}
+                  <div className="space-y-2">
+                    <Label htmlFor="type" className="text-sm font-medium text-gray-700">
+                      Type of Institution
+                    </Label>
+                    <Input
+                      id="type"
+                      placeholder="e.g., University, College, School"
+                      value={formData.type}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          type: e.target.value,
+                        }))
+                      }
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Official Email Address */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      Official Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter Email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Website URL (optional) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="website" className="text-sm font-medium text-gray-700">
+                      Website URL (optional)
+                    </Label>
+                    <Input
+                      id="website"
+                      placeholder="Enter website url"
+                      value={formData.website}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          website: e.target.value,
+                        }))
+                      }
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Total Student Strength (optional) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="totalStudentStrength" className="text-sm font-medium text-gray-700">
+                      Total Student Strength (optional)
+                    </Label>
+                    <Input
+                      id="totalStudentStrength"
+                      placeholder="Enter student strength"
+                      value={formData.totalStudentStrength}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          totalStudentStrength: e.target.value,
+                        }))
+                      }
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                      Password
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Institution Logo */}
+                  <div className="space-y-2">
+                    <Label htmlFor="logo" className="text-sm font-medium text-gray-700">
+                      Institution Logo
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="logo"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                          handleFileChange("logo", e.target.files?.[0] || null)
+                        }
+                        className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                      />
+                      <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    </div>
+                    {formData.logo && (
+                      <p className="text-xs text-gray-500">
+                        Selected: {formData.logo.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
+              {/* Additional Fields for Backend Compatibility */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter email address"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        email: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone *</Label>
-                  <Input
-                    id="phone"
-                    placeholder="Enter phone number"
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        phone: e.target.value,
-                      }))
-                    }
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    placeholder="https://www.example.com"
-                    value={formData.website}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        website: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="affiliatedBoard">Affiliated Board</Label>
-                  <Input
-                    id="affiliatedBoard"
-                    placeholder="Enter affiliated board"
-                    value={formData.affiliatedBoard}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        affiliatedBoard: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="yearOfEstablishment">
-                    Year of Establishment
+                  <Label htmlFor="primaryColor" className="text-sm font-medium text-gray-700">
+                    Primary Color
                   </Label>
-                  <Input
-                    id="yearOfEstablishment"
-                    placeholder="e.g., 1995"
-                    value={formData.yearOfEstablishment}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        yearOfEstablishment: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="totalStudentStrength">
-                    Total Student Strength
-                  </Label>
-                  <Input
-                    id="totalStudentStrength"
-                    placeholder="e.g., 1000"
-                    value={formData.totalStudentStrength}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        totalStudentStrength: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  placeholder="Enter institution address"
-                  className="min-h-[80px]"
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      address: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Enter institution password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      password: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="primaryColor">Primary Color</Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="primaryColor"
@@ -731,7 +821,7 @@ export default function InstitutionsPage() {
                           primaryColor: e.target.value,
                         }))
                       }
-                      className="w-16 h-10"
+                      className="w-16 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                     <Input
                       value={formData.primaryColor}
@@ -741,12 +831,14 @@ export default function InstitutionsPage() {
                           primaryColor: e.target.value,
                         }))
                       }
-                      className="flex-1"
+                      className="flex-1 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="secondaryColor">Secondary Color</Label>
+                  <Label htmlFor="secondaryColor" className="text-sm font-medium text-gray-700">
+                    Secondary Color
+                  </Label>
                   <div className="flex items-center gap-2">
                     <Input
                       id="secondaryColor"
@@ -758,7 +850,7 @@ export default function InstitutionsPage() {
                           secondaryColor: e.target.value,
                         }))
                       }
-                      className="w-16 h-10"
+                      className="w-16 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                     <Input
                       value={formData.secondaryColor}
@@ -768,106 +860,41 @@ export default function InstitutionsPage() {
                           secondaryColor: e.target.value,
                         }))
                       }
-                      className="flex-1"
+                      className="flex-1 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="logo">Institution Logo</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="logo"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        handleFileChange("logo", e.target.files?.[0] || null)
-                      }
-                      className="flex-1"
-                    />
-                    {formData.logo && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleFileChange("logo", null)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  {formData.logo && (
-                    <p className="text-xs text-muted-foreground">
-                      Selected: {formData.logo.name}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="proofOfInstitution">
-                    Proof of Institution
-                  </Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="proofOfInstitution"
-                      type="file"
-                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                      onChange={(e) =>
-                        handleFileChange(
-                          "proofOfInstitution",
-                          e.target.files?.[0] || null
-                        )
-                      }
-                      className="flex-1"
-                    />
-                    {formData.proofOfInstitution && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          handleFileChange("proofOfInstitution", null)
-                        }
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  {formData.proofOfInstitution && (
-                    <p className="text-xs text-muted-foreground">
-                      Selected: {formData.proofOfInstitution.name}
-                    </p>
-                  )}
                 </div>
               </div>
 
               {error && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
                   {error}
                 </div>
               )}
 
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" disabled={createLoading}>
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                  className="h-10 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createLoading}
+                  className="h-10 bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+                >
                   {createLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Creating...
                     </>
                   ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Create Institution
-                    </>
+                    "Create institution"
                   )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCreateForm(false)}
-                >
-                  Cancel
                 </Button>
               </div>
             </form>

@@ -477,58 +477,115 @@ export default function BlogsPage() {
 
       {/* Create Blog Form */}
       {showCreateForm && (
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Create New Blog Post</CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setShowCreateForm(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+        <Card className="max-w-7xl mx-auto">
+          <CardHeader className="text-left pb-6">
+            <CardTitle className="text-xl font-semibold text-gray-900">
+              Create a new blog post
+            </CardTitle>
+            <div className="w-full h-px bg-gray-200 mt-4"></div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateBlog} className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Enter blog title"
-                    value={formData.title}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        title: e.target.value,
-                      }))
-                    }
-                    required
-                  />
+            <form onSubmit={handleCreateBlog} className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  {/* Blog Title */}
+                  <div className="space-y-2">
+                    <Label htmlFor="title" className="text-sm font-medium text-gray-700">
+                      Blog Title
+                    </Label>
+                    <Input
+                      id="title"
+                      placeholder="Enter blog title"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          title: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Author */}
+                  <div className="space-y-2">
+                    <Label htmlFor="author" className="text-sm font-medium text-gray-700">
+                      Author
+                    </Label>
+                    <Input
+                      id="author"
+                      placeholder="Enter author name"
+                      value={formData.author}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          author: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  {/* Status */}
+                  <div className="space-y-2">
+                    <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                      Status
+                    </Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(value: "DRAFT" | "PUBLISHED") =>
+                        setFormData((prev) => ({ ...prev, status: value }))
+                      }
+                    >
+                      <SelectTrigger className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="DRAFT">Draft</SelectItem>
+                        <SelectItem value="PUBLISHED">Published</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="author">Author *</Label>
-                  <Input
-                    id="author"
-                    placeholder="Enter author name"
-                    value={formData.author}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        author: e.target.value,
-                      }))
-                    }
-                    required
-                  />
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {/* Cover Image */}
+                  <div className="space-y-2">
+                    <Label htmlFor="coverImage" className="text-sm font-medium text-gray-700">
+                      Cover Image
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="coverImage"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                      />
+                      <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    </div>
+                    {formData.coverImage && (
+                      <p className="text-xs text-gray-500">
+                        Selected: {formData.coverImage.name}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
+              {/* Content - Full Width */}
               <div className="space-y-2">
-                <Label htmlFor="content">Content *</Label>
+                <Label htmlFor="content" className="text-sm font-medium text-gray-700">
+                  Content
+                </Label>
                 <Textarea
                   id="content"
                   placeholder="Enter blog content"
-                  className="min-h-[120px]"
+                  className="min-h-[120px] bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
                   value={formData.content}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -540,81 +597,35 @@ export default function BlogsPage() {
                 />
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value: "DRAFT" | "PUBLISHED") =>
-                      setFormData((prev) => ({ ...prev, status: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="DRAFT">Draft</SelectItem>
-                      <SelectItem value="PUBLISHED">Published</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="coverImage">Cover Image</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="coverImage"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-muted"
-                    />
-                    {formData.coverImage && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                          setFormData((prev) => ({ ...prev, coverImage: null }))
-                        }
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
-                  </div>
-                  {formData.coverImage && (
-                    <p className="text-xs text-muted-foreground">
-                      Selected: {formData.coverImage.name}
-                    </p>
-                  )}
-                </div>
-              </div>
-
               {error && (
-                <div className="text-sm text-destructive bg-destructive/10 p-3 rounded-md">
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
                   {error}
                 </div>
               )}
 
-              <div className="flex gap-2 pt-4">
-                <Button type="submit" disabled={createLoading}>
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateForm(false)}
+                  className="h-10 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createLoading}
+                  className="h-10 bg-orange-600 text-white border-orange-600 hover:bg-orange-700 hover:border-orange-700"
+                >
                   {createLoading ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                       Creating...
                     </>
                   ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Create Blog Post
-                    </>
+                    "Create blog post"
                   )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowCreateForm(false)}
-                >
-                  Cancel
                 </Button>
               </div>
             </form>

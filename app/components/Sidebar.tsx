@@ -120,7 +120,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     className={cn(
                       isActive
                         ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground",
+                        : "text-muted-foreground  hover:text-foreground",
                       "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
                     )}
                     onClick={handleClose}

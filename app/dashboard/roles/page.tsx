@@ -649,41 +649,7 @@ export default function RolesPage() {
                 </div>
               </div>
 
-              {/* Permissions Section */}
-              <div className="space-y-4">
-                <Label className="text-sm font-medium text-gray-700">Permissions</Label>
-                <div className="space-y-6">
-                  {Object.entries(groupedPermissions).map(
-                    ([category, permissions]) => (
-                      <div key={category} className="space-y-3">
-                        <h4 className="font-medium text-sm text-gray-900">
-                          {category}
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {permissions.map((permission) => (
-                            <div
-                              key={permission.id}
-                              className="flex items-start space-x-2"
-                            >
-                              <div className="grid gap-1.5 leading-none">
-                                <Label
-                                  htmlFor={permission.id}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                                >
-                                  {permission.name}
-                                </Label>
-                                <p className="text-xs text-muted-foreground">
-                                  {permission.description}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
+              
 
               {error && (
                 <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">

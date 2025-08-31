@@ -449,7 +449,10 @@ export default function BlogsPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search blog posts..."
-                  className="pl-10 w-full"
+                  className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                  }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -505,7 +508,10 @@ export default function BlogsPage() {
                         }))
                       }
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -525,7 +531,10 @@ export default function BlogsPage() {
                         }))
                       }
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -540,7 +549,9 @@ export default function BlogsPage() {
                         setFormData((prev) => ({ ...prev, status: value }))
                       }
                     >
-                      <SelectTrigger className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectTrigger className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400" style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -564,7 +575,10 @@ export default function BlogsPage() {
                         type="file"
                         accept="image/*"
                         onChange={handleFileChange}
-                        className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                        className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400 pr-10"
+                        style={{
+                          background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        }}
                       />
                       <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
@@ -585,7 +599,10 @@ export default function BlogsPage() {
                 <Textarea
                   id="content"
                   placeholder="Enter blog content"
-                  className="min-h-[120px] bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                  className="min-h-[120px] border-0 focus:border-orange-400 focus:ring-orange-400 resize-none"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                  }}
                   value={formData.content}
                   onChange={(e) =>
                     setFormData((prev) => ({
@@ -688,20 +705,20 @@ export default function BlogsPage() {
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
-                              <TableRow className="bg-gray-100">
-                                <TableHead className="text-gray-900 min-w-[250px] px-4">
+                              <TableRow className="bg-brand-gradient text-white">
+                                <TableHead className="text-white min-w-[250px] px-4">
                                   Title
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[150px] px-4">
+                                <TableHead className="text-white min-w-[150px] px-4">
                                   Author
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[100px] px-4">
+                                <TableHead className="text-white min-w-[100px] px-4">
                                   Status
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[120px] px-4">
+                                <TableHead className="text-white min-w-[120px] px-4">
                                   Published
                                 </TableHead>
-                                <TableHead className="text-gray-900 text-right min-w-[100px] px-4">
+                                <TableHead className="text-white text-right min-w-[100px] px-4">
                                   Actions
                                 </TableHead>
                               </TableRow>

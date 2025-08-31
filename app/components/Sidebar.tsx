@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Menu } from "lucide-react";
 import NavIcon from "@/components/ui/nav-icon";
-import { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { apiClient, handleApiError } from "@/lib/api";
 import { getUserFromToken, logout } from "@/lib/jwt-utils";
 import type { User as ApiUser } from "@/lib/types";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 interface NavigationItem {
   name: string;
@@ -52,22 +52,9 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
   memoizedProfileNavigation: NavigationItem[];
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [hoveredPosition, setHoveredPosition] = useState({ top: 0, height: 0 });
-  const navRefs = useRef<(HTMLLIElement | null)[]>([]);
+  
 
   const handleMouseEnter = (index: number) => {
-    const element = navRefs.current[index];
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      const navElement = element.closest('nav');
-      if (navElement) {
-        const navRect = navElement.getBoundingClientRect();
-        setHoveredPosition({
-          top: rect.top - navRect.top,
-          height: rect.height
-        });
-      }
-    }
     setHoveredIndex(index);
   };
 
@@ -75,33 +62,13 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
     setHoveredIndex(null);
   };
 
+  // active state is derived inline per item
+
+  // No manual measurements; shared-layout animation will handle transitions
+
   return (
     <nav className="flex flex-1 flex-col relative">
-      {/* Animated background */}
-      <AnimatePresence>
-        {hoveredIndex !== null && (
-          <motion.div
-            initial={{ opacity: 0, y: hoveredPosition.top }}
-            animate={{
-              opacity: 1,
-              y: hoveredPosition.top,
-              height: hoveredPosition.height
-            }}
-            exit={{ opacity: 0 }}
-            transition={{
-              type: "spring",
-              stiffness: 500,
-              damping: 30,
-              mass: 0.8
-            }}
-            className="absolute left-0 right-0 bg-accent/60 rounded-md pointer-events-none z-0"
-            style={{
-              transform: 'translateX(-8px)',
-              width: 'calc(100% + 16px)'
-            }}
-          />
-        )}
-      </AnimatePresence>
+      {/* Backgrounds will be rendered per-item for shared-layout animation */}
 
       <ul role="list" className="flex flex-1 flex-col relative z-10">
         <li>
@@ -109,18 +76,30 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
             {memoizedNavigation.map((item, index) => {
               const isActive = pathname === item.href;
               return (
-                <li
+                <motion.li
                   key={item.name}
-                  ref={(el: HTMLLIElement | null) => { navRefs.current[index] = el; }}
                   onMouseEnter={() => handleMouseEnter(index)}
                   onMouseLeave={handleMouseLeave}
+                  className="relative"
                 >
+                  {isActive && (
+                    <motion.div
+                      layoutId="sidebar-active-bg"
+                      transition={{ type: "spring", stiffness: 240, damping: 28, mass: 1 }}
+                      className="absolute inset-0 -mx-2 bg-orange-500 rounded-md z-0"
+                    />
+                  )}
+                  {!isActive && hoveredIndex === index && (
+                    <motion.div
+                      layoutId="sidebar-hover-bg"
+                      transition={{ type: "spring", stiffness: 280, damping: 30, mass: 0.9 }}
+                      className="absolute inset-0 -mx-2 bg-orange-500/40 rounded-md z-0"
+                    />
+                  )}
                   <Link
                     href={item.href}
                     className={cn(
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground  hover:text-foreground",
+                      isActive ? "text-white" : "text-muted-foreground  hover:text-foreground",
                       "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
                     )}
                     onClick={handleClose}
@@ -134,7 +113,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     />
                     {item.name}
                   </Link>
-                </li>
+                </motion.li>
               );
             })}
           </ul>
@@ -148,11 +127,11 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
               const isActive = pathname === item.href;
               const adjustedIndex = memoizedNavigation.length + index;
               return (
-                <li
+                <motion.li
                   key={item.name}
-                  ref={(el: HTMLLIElement | null) => { navRefs.current[adjustedIndex] = el; }}
                   onMouseEnter={() => handleMouseEnter(adjustedIndex)}
                   onMouseLeave={handleMouseLeave}
+                  className="relative"
                 >
                   {item.action === "logout" ? (
                     <Button
@@ -173,13 +152,25 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     <Link
                       href={item.href}
                       className={cn(
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground",
+                        isActive ? "text-white" : "text-muted-foreground hover:text-foreground",
                         "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
                       )}
                       onClick={handleClose}
                     >
+                      {isActive && (
+                        <motion.div
+                          layoutId="sidebar-active-bg"
+                          transition={{ type: "spring", stiffness: 240, damping: 28, mass: 1 }}
+                          className="absolute inset-0 -mx-2 bg-orange-500 rounded-md z-0"
+                        />
+                      )}
+                      {!isActive && hoveredIndex === adjustedIndex && (
+                        <motion.div
+                          layoutId="sidebar-hover-bg"
+                          transition={{ type: "spring", stiffness: 280, damping: 30, mass: 0.9 }}
+                          className="absolute inset-0 -mx-2 bg-orange-500/40 rounded-md z-0"
+                        />
+                      )}
                       <NavIcon
                         key={`${item.iconName}-${isActive}`} // Stable key to prevent remounting
                         name={item.iconName}
@@ -190,7 +181,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                       {item.name}
                     </Link>
                   )}
-                </li>
+                </motion.li>
               );
             })}
           </ul>

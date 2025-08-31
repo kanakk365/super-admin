@@ -131,16 +131,18 @@ export default function AssignFeaturesPage() {
               <CardTitle className="text-lg">Assigned Features</CardTitle>
             </CardHeader>
             <CardContent>
-              <Table>
+              <div className="rounded-lg border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
                 <TableHeader>
-                  <TableRow className="bg-gray-100">
-                    <TableHead className="text-gray-900 font-semibold">
+                  <TableRow className="bg-brand-gradient text-white">
+                    <TableHead className="text-white font-semibold">
                       Feature name
                     </TableHead>
-                    <TableHead className="text-gray-900 font-semibold">
+                    <TableHead className="text-white font-semibold">
                       Description
                     </TableHead>
-                    <TableHead className="text-gray-900 font-semibold text-right">
+                    <TableHead className="text-white font-semibold text-right">
                       Status
                     </TableHead>
                   </TableRow>
@@ -164,7 +166,9 @@ export default function AssignFeaturesPage() {
                     </TableRow>
                   ))}
                 </TableBody>
-              </Table>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>

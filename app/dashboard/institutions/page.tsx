@@ -512,7 +512,7 @@ export default function InstitutionsPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search institutions..."
-                  className="pl-10 w-full"
+                  className="pl-10 w-full h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -568,7 +568,10 @@ export default function InstitutionsPage() {
                         }))
                       }
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -587,7 +590,10 @@ export default function InstitutionsPage() {
                           affiliatedBoard: e.target.value,
                         }))
                       }
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -607,7 +613,10 @@ export default function InstitutionsPage() {
                         }))
                       }
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -626,7 +635,10 @@ export default function InstitutionsPage() {
                           yearOfEstablishment: e.target.value,
                         }))
                       }
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -646,7 +658,7 @@ export default function InstitutionsPage() {
                             e.target.files?.[0] || null
                           )
                         }
-                        className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                        className="h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400 pr-10"
                         placeholder="e.g., affiliation certificate, recognition letter"
                       />
                       <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -666,7 +678,10 @@ export default function InstitutionsPage() {
                     <Textarea
                       id="address"
                       placeholder="Type address info"
-                      className="min-h-[100px] bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                      className="min-h-[100px] border-0 focus:border-orange-400 focus:ring-orange-400 resize-none"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                       value={formData.address}
                       onChange={(e) =>
                         setFormData((prev) => ({
@@ -695,7 +710,10 @@ export default function InstitutionsPage() {
                           type: e.target.value,
                         }))
                       }
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -716,7 +734,10 @@ export default function InstitutionsPage() {
                         }))
                       }
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -735,7 +756,10 @@ export default function InstitutionsPage() {
                           website: e.target.value,
                         }))
                       }
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -754,7 +778,10 @@ export default function InstitutionsPage() {
                           totalStudentStrength: e.target.value,
                         }))
                       }
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -774,7 +801,10 @@ export default function InstitutionsPage() {
                           password: e.target.value,
                         }))
                       }
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -791,7 +821,7 @@ export default function InstitutionsPage() {
                         onChange={(e) =>
                           handleFileChange("logo", e.target.files?.[0] || null)
                         }
-                        className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                        className="h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400 pr-10"
                       />
                       <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
@@ -821,7 +851,7 @@ export default function InstitutionsPage() {
                           primaryColor: e.target.value,
                         }))
                       }
-                      className="w-16 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="w-16 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
                     />
                     <Input
                       value={formData.primaryColor}
@@ -831,7 +861,7 @@ export default function InstitutionsPage() {
                           primaryColor: e.target.value,
                         }))
                       }
-                      className="flex-1 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="flex-1 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
                     />
                   </div>
                 </div>
@@ -850,7 +880,7 @@ export default function InstitutionsPage() {
                           secondaryColor: e.target.value,
                         }))
                       }
-                      className="w-16 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="w-16 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
                     />
                     <Input
                       value={formData.secondaryColor}
@@ -860,7 +890,7 @@ export default function InstitutionsPage() {
                           secondaryColor: e.target.value,
                         }))
                       }
-                      className="flex-1 h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="flex-1 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
                     />
                   </div>
                 </div>
@@ -957,26 +987,26 @@ export default function InstitutionsPage() {
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
-                              <TableRow className="bg-gray-100">
-                                <TableHead className="text-gray-900 min-w-[80px] px-4">
+                              <TableRow className="bg-brand-gradient text-white">
+                                <TableHead className="text-white min-w-[80px] px-4">
                                   Logo
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[200px] px-4">
+                                <TableHead className="text-white min-w-[200px] px-4">
                                   Institution & Type
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[180px] px-4">
+                                <TableHead className="text-white min-w-[180px] px-4">
                                   Contact
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[100px] px-4">
+                                <TableHead className="text-white min-w-[100px] px-4">
                                   Status
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[120px] px-4">
+                                <TableHead className="text-white min-w-[120px] px-4">
                                   Students
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[100px] px-4">
+                                <TableHead className="text-white min-w-[100px] px-4">
                                   Established
                                 </TableHead>
-                                <TableHead className="text-gray-900 text-right min-w-[100px] px-4">
+                                <TableHead className="text-white text-right min-w-[100px] px-4">
                                   Actions
                                 </TableHead>
                               </TableRow>

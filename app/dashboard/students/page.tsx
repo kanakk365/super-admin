@@ -434,7 +434,10 @@ export default function StudentsPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search students..."
-                  className="pl-10 w-full"
+                  className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                  }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -486,7 +489,10 @@ export default function StudentsPage() {
                       value={createFormData.firstName}
                       onChange={handleCreateFormChange}
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -502,7 +508,10 @@ export default function StudentsPage() {
                       value={createFormData.lastName}
                       onChange={handleCreateFormChange}
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -519,7 +528,10 @@ export default function StudentsPage() {
                       value={createFormData.email}
                       onChange={handleCreateFormChange}
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%) !important'
+                      }}
                     />
                   </div>
                 </div>
@@ -539,7 +551,10 @@ export default function StudentsPage() {
                         placeholder="Enter password"
                         value={createFormData.password}
                         onChange={handleCreateFormChange}
-                        className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10"
+                        className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400 pr-10"
+                        style={{
+                          background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        }}
                         required
                       />
                       <button
@@ -649,20 +664,20 @@ export default function StudentsPage() {
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
-                              <TableRow className="bg-gray-100">
-                                <TableHead className="text-gray-900 min-w-[200px] px-4">
+                              <TableRow className="bg-brand-gradient text-white">
+                                <TableHead className="text-white min-w-[200px] px-4">
                                   Student
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[200px] px-4">
+                                <TableHead className="text-white min-w-[200px] px-4">
                                   Email
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[100px] px-4">
+                                <TableHead className="text-white min-w-[100px] px-4">
                                   Status
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[100px] px-4">
+                                <TableHead className="text-white min-w-[100px] px-4">
                                   Verification
                                 </TableHead>
-                                <TableHead className="text-gray-900 text-right min-w-[100px] px-4">
+                                <TableHead className="text-white text-right min-w-[100px] px-4">
                                   Actions
                                 </TableHead>
                               </TableRow>

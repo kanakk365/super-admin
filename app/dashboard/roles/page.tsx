@@ -543,7 +543,10 @@ export default function RolesPage() {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search roles..."
-                  className="pl-10 w-full"
+                  className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                  }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -599,7 +602,10 @@ export default function RolesPage() {
                         }))
                       }
                       required
-                      className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
 
@@ -614,7 +620,9 @@ export default function RolesPage() {
                         setFormData((prev) => ({ ...prev, status: value }))
                       }
                     >
-                      <SelectTrigger className="h-11 bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectTrigger className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400" style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
@@ -635,7 +643,10 @@ export default function RolesPage() {
                     <Textarea
                       id="description"
                       placeholder="Enter role description"
-                      className="min-h-[100px] bg-gray-50 border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                      className="min-h-[100px] border-0 focus:border-orange-400 focus:ring-orange-400 resize-none"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                       value={formData.description}
                       onChange={(e) =>
                         setFormData((prev) => ({
@@ -740,17 +751,17 @@ export default function RolesPage() {
                         <div className="overflow-x-auto">
                           <Table>
                             <TableHeader>
-                              <TableRow className="bg-gray-100">
-                                <TableHead className="text-gray-900 min-w-[200px] px-4">
+                              <TableRow className="bg-brand-gradient text-white">
+                                <TableHead className="text-white min-w-[200px] px-4">
                                   Role Name
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[120px] px-4">
+                                <TableHead className="text-white min-w-[120px] px-4">
                                   Assigned Users
                                 </TableHead>
-                                <TableHead className="text-gray-900 min-w-[250px] px-4">
+                                <TableHead className="text-white min-w-[250px] px-4">
                                   Permission Summary
                                 </TableHead>
-                                <TableHead className="text-gray-900 text-right min-w-[100px] px-4">
+                                <TableHead className="text-white text-right min-w-[100px] px-4">
                                   Actions
                                 </TableHead>
                               </TableRow>

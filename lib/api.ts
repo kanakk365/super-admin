@@ -8,10 +8,10 @@ export const API_CONFIG = {
       LOGIN: "/super-admin/auth/super-admin/login",
       REGISTER: "/super-admin/auth/super-admin/register",
       LOGOUT: "/super-admin/auth/super-admin/logout",
+      REGISTER_SUPER_INSTITUTION_ADMIN: "/super-admin/auth/super-admin/register-super-institution-admin",
     },
     USERS: "/super-admin/users",
     INSTITUTIONS: "/super-admin/institution",
-    STUDENTS: "/super-admin/students",
     BLOGS: "/super-admin/blogs",
     ROLES: "/super-admin/roles",
     HEALTH: "/super-admin/health",
@@ -105,6 +105,13 @@ class ApiClient {
 
   async register(userData: RegisterData): Promise<AuthResponse> {
     return this.request<AuthResponse>(API_CONFIG.ENDPOINTS.AUTH.REGISTER, {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async registerSuperInstitutionAdmin(userData: { name: string; email: string; password: string; role: string }): Promise<AuthResponse> {
+    return this.request<AuthResponse>(API_CONFIG.ENDPOINTS.AUTH.REGISTER_SUPER_INSTITUTION_ADMIN, {
       method: "POST",
       body: JSON.stringify(userData),
     });

@@ -30,6 +30,11 @@ const navigation = [
   },
   { name: "Students", href: "/dashboard/students", iconName: "students" },
   {
+    name: "Super Institution Admin",
+    href: "/dashboard/super-institution-admin",
+    iconName: "super-institution-admin",
+  },
+  {
     name: "Assign Features",
     href: "/dashboard/assignfeatures",
     iconName: "assign-features",
@@ -152,14 +157,16 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     <Link
                       href={item.href}
                       className={cn(
-                        isActive ? "text-white" : "text-muted-foreground hover:text-foreground",
+                        isActive
+                          ? "text-white font-semibold"
+                          : "text-muted-foreground hover:text-foreground",
                         "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
                       )}
                       onClick={handleClose}
                     >
                       {isActive && (
                         <motion.div
-                          layoutId="sidebar-active-bg"
+                          layoutId="sidebar-profile-active-bg"
                           transition={{ type: "spring", stiffness: 240, damping: 28, mass: 1 }}
                           className="absolute inset-0 -mx-2 bg-orange-500 rounded-md z-0"
                         />
@@ -176,9 +183,17 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                         name={item.iconName}
                         isActive={isActive}
                         size={20}
-                        className="shrink-0"
+                        className={cn(
+                          "shrink-0",
+                          isActive ? "text-white" : "text-muted-foreground"
+                        )}
                       />
-                      {item.name}
+                      <span className={cn(
+                        isActive ? "text-white font-semibold" : "text-muted-foreground font-medium",
+                        "relative z-20"
+                      )} style={{ color: isActive ? '#ffffff !important' : undefined }}>
+                        {item.name}
+                      </span>
                     </Link>
                   )}
                 </motion.li>
@@ -192,7 +207,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
           {user && (
             <Link
               href="/dashboard/profile"
-              className="flex items-center gap-3 p-3 bg-accent/50 rounded-md hover:bg-accent transition-colors"
+              className="flex items-center gap-3 p-3 bg-accent/50 rounded-md hover:text-black hover:bg-accent transition-colors"
               onClick={handleClose}
             >
               <Avatar className="h-8 w-8">

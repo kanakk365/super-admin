@@ -106,12 +106,16 @@ export default function NavIcon({
 
   if (!processedSvg) return null;
 
+  console.log(`Rendering ${name} icon - isActive: ${isActive}, className:`, className);
+
   return (
     <div
-      className={`inline-flex items-center justify-center transition-colors duration-200 ${
-        isActive ? 'text-white' : 'text-[#626262]'
-      } ${className}`}
-      style={{ width: size, height: size }}
+      className={`inline-flex items-center justify-center transition-colors duration-200 ${className}`}
+      style={{
+        width: size,
+        height: size,
+        color: isActive ? '#ffffff' : '#626262'
+      }}
       dangerouslySetInnerHTML={{ __html: processedSvg }}
     />
   );

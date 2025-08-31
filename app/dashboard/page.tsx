@@ -125,23 +125,18 @@ export default function Dashboard() {
       setError(null);
 
       // Fetch dashboard statistics with proper endpoints
-      const [institutionsRes, blogsRes] = await Promise.allSettled([
+      const [institutionsRes, studentsRes, blogsRes] = await Promise.allSettled([
         apiClient.get("/super-admin/institution"),
+        apiClient.get("/super-admin/users"),
         apiClient.get("/super-admin/blogs"),
       ]);
 
-      // Calculate student count from institutions data
-      let studentCount = 0;
-      if (institutionsRes.status === "fulfilled") {
-        const institutionsData = institutionsRes.value as {
-          data?: { data?: Array<{ totalStudentStrength?: number }> };
-        };
-        studentCount =
-          institutionsData?.data?.data?.reduce(
-            (sum, inst) => sum + (inst.totalStudentStrength || 0),
-            0
-          ) || 0;
-      }
+      // Get actual student count from users API
+      const studentData =
+        studentsRes.status === "fulfilled"
+          ? (studentsRes.value as { data?: unknown[] })
+          : null;
+      const studentCount = studentData?.data?.length || 0;
 
       const institutionData =
         institutionsRes.status === "fulfilled"
@@ -183,10 +178,10 @@ export default function Dashboard() {
         Math.floor(blogCount * 0.12 + (Math.random() * 12 - 6))
       );
 
-      // Placeholder active features (simulate based on blogs + institutions)
-      const activeFeatures = Math.max(0, institutionCount * 3 + blogCount * 2);
-      // Placeholder revenue simulation (e.g., per student fee * random factor)
-      const revenue = Math.round(studentCount * 120 + institutionCount * 500);
+      // Fixed active features count
+      const activeFeatures = 8;
+      // Fixed revenue (set to 0 as requested)
+      const revenue = 0;
 
       setStats({
         totalStudents: studentCount,
@@ -384,7 +379,7 @@ export default function Dashboard() {
                 />
               <div>
                 <p className="text-2xl text-neutral-600 font-semibold ">
-                  ₹{(stats.revenue / 1000).toFixed(0)}k
+                  ₹{stats.revenue.toLocaleString()}
                 </p>
                 <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
                   Revenue

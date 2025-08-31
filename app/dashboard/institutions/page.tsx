@@ -915,7 +915,7 @@ export default function InstitutionsPage() {
                 <Button
                   type="submit"
                   disabled={createLoading}
-                  className="h-10 bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+                  className="h-10 bg-orange-600 text-white border-orange-600 hover:bg-orange-700 hover:border-orange-700"
                 >
                   {createLoading ? (
                     <>

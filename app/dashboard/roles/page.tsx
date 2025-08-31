@@ -817,20 +817,6 @@ export default function RolesPage() {
                     {/* Pagination and Summary */}
                     {filteredRoles.length > 0 && (
                       <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
-                        {/* Summary */}
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm text-muted-foreground">
-                          <div>
-                            Showing {startIndex + 1}-{Math.min(endIndex, filteredRoles.length)} of{" "}
-                            {filteredRoles.length} roles
-                          </div>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                            <span>Total: {stats.total}</span>
-                            <span>Active: {stats.active}</span>
-                            <span>Users: {stats.totalUsers}</span>
-                          </div>
-                        </div>
-
-                        {/* Pagination Controls */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           {/* Items per page selector */}
                           <div className="flex items-center gap-2">

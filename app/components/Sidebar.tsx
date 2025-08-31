@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronRight, Menu } from "lucide-react";
 import NavIcon from "@/components/ui/nav-icon";
-import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { apiClient, handleApiError } from "@/lib/api";
 import { getUserFromToken, logout } from "@/lib/jwt-utils";
 import type { User as ApiUser } from "@/lib/types";
+import { motion, AnimatePresence } from "motion/react";
 
 interface NavigationItem {
   name: string;
@@ -49,71 +50,78 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
   handleNavigation: (item: NavigationItem) => void;
   memoizedNavigation: NavigationItem[];
   memoizedProfileNavigation: NavigationItem[];
-}) => (
-  <nav className="flex flex-1 flex-col">
-    <ul role="list" className="flex flex-1 flex-col">
-      <li>
-        <ul role="list" className="-mx-2 space-y-1">
-          {memoizedNavigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                    "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors",
-                  )}
-                  onClick={handleClose}
-                >
-                  <NavIcon
-                    key={`${item.iconName}-${isActive}`} // Stable key to prevent remounting
-                    name={item.iconName}
-                    isActive={isActive}
-                    size={20}
-                    className="shrink-0"
-                  />
-                  {item.name}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </li>
+}) => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [hoveredPosition, setHoveredPosition] = useState({ top: 0, height: 0 });
+  const navRefs = useRef<(HTMLLIElement | null)[]>([]);
 
-      {/* Separator line */}
-      <li>
-        <div className="border-t border-border my-4"></div>
-        <ul role="list" className="-mx-2 space-y-1">
-          {memoizedProfileNavigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <li key={item.name}>
-                {item.action === "logout" ? (
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleNavigation(item)}
-                    className="w-full justify-start text-muted-foreground hover:text-foreground hover:bg-accent p-2 gap-x-4"
-                  >
-                    <NavIcon
-                      key={`${item.iconName}-logout`} // Stable key for logout icon
-                      name={item.iconName}
-                      isActive={false}
-                      size={20}
-                      className="shrink-0"
-                    />
-                    {item.name}
-                  </Button>
-                ) : (
+  const handleMouseEnter = (index: number) => {
+    const element = navRefs.current[index];
+    if (element) {
+      const rect = element.getBoundingClientRect();
+      const navElement = element.closest('nav');
+      if (navElement) {
+        const navRect = navElement.getBoundingClientRect();
+        setHoveredPosition({
+          top: rect.top - navRect.top,
+          height: rect.height
+        });
+      }
+    }
+    setHoveredIndex(index);
+  };
+
+  const handleMouseLeave = () => {
+    setHoveredIndex(null);
+  };
+
+  return (
+    <nav className="flex flex-1 flex-col relative">
+      {/* Animated background */}
+      <AnimatePresence>
+        {hoveredIndex !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: hoveredPosition.top }}
+            animate={{
+              opacity: 1,
+              y: hoveredPosition.top,
+              height: hoveredPosition.height
+            }}
+            exit={{ opacity: 0 }}
+            transition={{
+              type: "spring",
+              stiffness: 500,
+              damping: 30,
+              mass: 0.8
+            }}
+            className="absolute left-0 right-0 bg-accent/60 rounded-md pointer-events-none z-0"
+            style={{
+              transform: 'translateX(-8px)',
+              width: 'calc(100% + 16px)'
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      <ul role="list" className="flex flex-1 flex-col relative z-10">
+        <li>
+          <ul role="list" className="-mx-2 space-y-1">
+            {memoizedNavigation.map((item, index) => {
+              const isActive = pathname === item.href;
+              return (
+                <li
+                  key={item.name}
+                  ref={(el: HTMLLIElement | null) => { navRefs.current[index] = el; }}
+                  onMouseEnter={() => handleMouseEnter(index)}
+                  onMouseLeave={handleMouseLeave}
+                >
                   <Link
                     href={item.href}
                     className={cn(
                       isActive
                         ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-accent",
-                      "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors",
+                        : "text-muted-foreground hover:text-foreground",
+                      "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
                     )}
                     onClick={handleClose}
                   >
@@ -126,52 +134,108 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     />
                     {item.name}
                   </Link>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </li>
+                </li>
+              );
+            })}
+          </ul>
+        </li>
 
-      {/* Profile Display at bottom */}
-      <li className="mt-auto">
-        {user && (
-          <Link
-            href="/dashboard/profile"
-            className="flex items-center gap-3 p-3 bg-accent/50 rounded-md hover:bg-accent transition-colors"
-            onClick={handleClose}
-          >
-            <Avatar className="h-8 w-8">
-              <AvatarImage src="" alt={user.name} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
-                {user.name
-                  ? user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)
-                  : "??"}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col items-start min-w-0 flex-1">
-              <div className="text-xs font-medium text-muted-foreground truncate">
-                Welcome 👋
+        {/* Separator line */}
+        <li>
+          <div className="border-t border-border my-4"></div>
+          <ul role="list" className="-mx-2 space-y-1">
+            {memoizedProfileNavigation.map((item, index) => {
+              const isActive = pathname === item.href;
+              const adjustedIndex = memoizedNavigation.length + index;
+              return (
+                <li
+                  key={item.name}
+                  ref={(el: HTMLLIElement | null) => { navRefs.current[adjustedIndex] = el; }}
+                  onMouseEnter={() => handleMouseEnter(adjustedIndex)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  {item.action === "logout" ? (
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleNavigation(item)}
+                      className="w-full justify-start text-muted-foreground hover:text-foreground p-2 gap-x-4 relative z-10"
+                    >
+                      <NavIcon
+                        key={`${item.iconName}-logout`} // Stable key for logout icon
+                        name={item.iconName}
+                        isActive={false}
+                        size={20}
+                        className="shrink-0"
+                      />
+                      {item.name}
+                    </Button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                        "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
+                      )}
+                      onClick={handleClose}
+                    >
+                      <NavIcon
+                        key={`${item.iconName}-${isActive}`} // Stable key to prevent remounting
+                        name={item.iconName}
+                        isActive={isActive}
+                        size={20}
+                        className="shrink-0"
+                      />
+                      {item.name}
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </li>
+
+        {/* Profile Display at bottom */}
+        <li className="mt-auto">
+          {user && (
+            <Link
+              href="/dashboard/profile"
+              className="flex items-center gap-3 p-3 bg-accent/50 rounded-md hover:bg-accent transition-colors"
+              onClick={handleClose}
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src="" alt={user.name} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                  {user.name
+                    ? user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : "??"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col items-start min-w-0 flex-1">
+                <div className="text-xs font-medium text-muted-foreground truncate">
+                  Welcome 👋
+                </div>
+                <div className="text-sm text-foreground capitalize">
+                  {user.name ? user.name.split(" ")[0] : "User"}
+                </div>
               </div>
-              <div className="text-sm text-foreground capitalize">
-                {user.name ? user.name.split(" ")[0] : "User"}
-              </div>
-            </div>
-            <ChevronRight
-              size={16}
-              className="text-muted-foreground"
-            />
-          </Link>
-        )}
-      </li>
-    </ul>
-  </nav>
-));
+              <ChevronRight
+                size={16}
+                className="text-muted-foreground"
+              />
+            </Link>
+          )}
+        </li>
+      </ul>
+    </nav>
+  );
+});
 
 NavItems.displayName = 'NavItems';
 

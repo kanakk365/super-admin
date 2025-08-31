@@ -128,8 +128,7 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen bg-cover bg-center flex items-center justify-center p-4"
-      style={{ backgroundImage: 'url("/loginbg.jpg")' }}
+      className="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center p-4"
     >
       <div className="w-full max-w-md">
         <Card className="shadow-xl backdrop-blur rounded-2xl border border-slate-100">
@@ -231,7 +230,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full h-12 rounded-lg bg-gradient-to-r from-slate-900 via-slate-800 to-cyan-700 hover:from-slate-800 hover:via-slate-700 hover:to-cyan-600 text-white font-medium shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-12 rounded-lg bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white font-medium shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">
@@ -250,7 +249,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={toggleMode}
-                  className="ml-1 font-medium text-cyan-700 hover:text-cyan-600 underline"
+                  className="ml-1 font-medium text-orange-600 hover:text-orange-500 underline"
                 >
                   {isLogin ? "Sign up" : "Sign in"}
                 </button>

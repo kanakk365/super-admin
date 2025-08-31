@@ -93,7 +93,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     <motion.div
                       layoutId="sidebar-hover-bg"
                       transition={{ type: "spring", stiffness: 280, damping: 30, mass: 0.9 }}
-                      className="absolute inset-0 -mx-2 bg-orange-500/40 rounded-md z-0"
+                      className="absolute inset-0 -mx-2 bg-gray-100 rounded-md z-0"
                     />
                   )}
                   <Link
@@ -168,7 +168,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                         <motion.div
                           layoutId="sidebar-hover-bg"
                           transition={{ type: "spring", stiffness: 280, damping: 30, mass: 0.9 }}
-                          className="absolute inset-0 -mx-2 bg-orange-500/40 rounded-md z-0"
+                          className="absolute inset-0 -mx-2 bg-gray-100 rounded-md z-0"
                         />
                       )}
                       <NavIcon

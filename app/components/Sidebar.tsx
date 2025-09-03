@@ -2,8 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight, Menu } from "lucide-react";
-import NavIcon from "@/components/ui/nav-icon";
+import {
+  ChevronRight,
+  Menu,
+  LayoutDashboard,
+  Building2,
+  Users,
+  Settings,
+  FileText,
+  Shield,
+  User,
+  LogOut
+} from "lucide-react";
 import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -20,6 +30,36 @@ interface NavigationItem {
   iconName: string;
   action?: string;
 }
+
+// Function to get the appropriate icon component
+const getIcon = (iconName: string, isActive: boolean, className: string) => {
+  const iconClass = cn(
+    "shrink-0",
+    isActive ? "text-white" : "text-muted-foreground",
+    className
+  );
+
+  switch (iconName) {
+    case "dashboard":
+      return <LayoutDashboard className={iconClass} size={20} />;
+    case "institutions":
+      return <Building2 className={iconClass} size={20} />;
+    case "students":
+      return <Users className={iconClass} size={20} />;
+    case "assign-features":
+      return <Settings className={iconClass} size={20} />;
+    case "blogs":
+      return <FileText className={iconClass} size={20} />;
+    case "roles":
+      return <Shield className={iconClass} size={20} />;
+    case "profile":
+      return <User className={iconClass} size={20} />;
+    case "logout":
+      return <LogOut className={iconClass} size={20} />;
+    default:
+      return <Settings className={iconClass} size={20} />;
+  }
+};
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", iconName: "dashboard" },
@@ -109,13 +149,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     )}
                     onClick={handleClose}
                   >
-                    <NavIcon
-                      key={`${item.iconName}-${isActive}`} // Stable key to prevent remounting
-                      name={item.iconName}
-                      isActive={isActive}
-                      size={20}
-                      className="shrink-0"
-                    />
+                    {getIcon(item.iconName, isActive, "shrink-0")}
                     {item.name}
                   </Link>
                 </motion.li>
@@ -144,26 +178,11 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                       onClick={() => handleNavigation(item)}
                       className="w-full justify-start text-muted-foreground hover:text-foreground p-2 gap-x-4 relative z-10"
                     >
-                      <NavIcon
-                        key={`${item.iconName}-logout`} // Stable key for logout icon
-                        name={item.iconName}
-                        isActive={false}
-                        size={20}
-                        className="shrink-0"
-                      />
+                      {getIcon(item.iconName, false, "shrink-0")}
                       {item.name}
                     </Button>
                   ) : (
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        isActive
-                          ? "text-white font-semibold"
-                          : "text-muted-foreground hover:text-foreground",
-                        "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
-                      )}
-                      onClick={handleClose}
-                    >
+                    <>
                       {isActive && (
                         <motion.div
                           layoutId="sidebar-profile-active-bg"
@@ -178,23 +197,20 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                           className="absolute inset-0 -mx-2 bg-gray-100 rounded-md z-0"
                         />
                       )}
-                      <NavIcon
-                        key={`${item.iconName}-${isActive}`} // Stable key to prevent remounting
-                        name={item.iconName}
-                        isActive={isActive}
-                        size={20}
+                      <Link
+                        href={item.href}
                         className={cn(
-                          "shrink-0",
-                          isActive ? "text-white" : "text-muted-foreground"
+                          isActive
+                            ? "text-white font-semibold"
+                            : "text-muted-foreground hover:text-foreground",
+                          "group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-medium transition-colors relative z-10",
                         )}
-                      />
-                      <span className={cn(
-                        isActive ? "text-white font-semibold" : "text-muted-foreground font-medium",
-                        "relative z-20"
-                      )} style={{ color: isActive ? '#ffffff !important' : undefined }}>
+                        onClick={handleClose}
+                      >
+                        {getIcon(item.iconName, isActive, "shrink-0")}
                         {item.name}
-                      </span>
-                    </Link>
+                      </Link>
+                    </>
                   )}
                 </motion.li>
               );

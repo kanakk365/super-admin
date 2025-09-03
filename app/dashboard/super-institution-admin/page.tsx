@@ -5,11 +5,10 @@ import {
   Search,
   Plus,
   X,
-  Eye,
-  Edit,
-  Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ArrowLeft,
   Mail,
   User,
 } from "lucide-react";
@@ -35,12 +34,6 @@ import {
 } from "@/components/ui/table";
 
 import { apiClient, handleApiError } from "@/lib/api";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 
 // Types
 interface SuperInstitutionAdmin {
@@ -78,36 +71,36 @@ const availableRoles = [
 
 // Mock data for demonstration
 const mockAdmins: SuperInstitutionAdmin[] = [
-    {
-      id: "1",
-      name: "John Admin",
-      email: "john.admin@example.com",
-      role: "SUPER_INSTITUTION_ADMIN",
-      isActive: true,
-      createdAt: "2024-01-15T10:00:00Z",
-      updatedAt: "2024-01-20T15:30:00Z",
-      lastLogin: "2024-01-20T15:30:00Z",
-    },
-    {
-      id: "2",
-      name: "Sarah Manager",
-      email: "sarah.manager@example.com",
-      role: "SUPER_INSTITUTION_ADMIN",
-      isActive: true,
-      createdAt: "2024-01-10T08:00:00Z",
-      updatedAt: "2024-01-18T12:00:00Z",
-      lastLogin: "2024-01-18T12:00:00Z",
-    },
-    {
-      id: "3",
-      name: "Mike Supervisor",
-      email: "mike.supervisor@example.com",
-      role: "SUPER_INSTITUTION_ADMIN",
-      isActive: false,
-      createdAt: "2024-01-05T09:00:00Z",
-      updatedAt: "2024-01-12T11:00:00Z",
-    },
-  ];
+  {
+    id: "1",
+    name: "John Admin",
+    email: "john.admin@example.com",
+    role: "SUPER_INSTITUTION_ADMIN",
+    isActive: true,
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-01-20T15:30:00Z",
+    lastLogin: "2024-01-20T15:30:00Z",
+  },
+  {
+    id: "2",
+    name: "Sarah Manager",
+    email: "sarah.manager@example.com",
+    role: "SUPER_INSTITUTION_ADMIN",
+    isActive: true,
+    createdAt: "2024-01-10T08:00:00Z",
+    updatedAt: "2024-01-18T12:00:00Z",
+    lastLogin: "2024-01-18T12:00:00Z",
+  },
+  {
+    id: "3",
+    name: "Mike Supervisor",
+    email: "mike.supervisor@example.com",
+    role: "SUPER_INSTITUTION_ADMIN",
+    isActive: false,
+    createdAt: "2024-01-05T09:00:00Z",
+    updatedAt: "2024-01-12T11:00:00Z",
+  },
+];
 
 export default function SuperInstitutionAdminPage() {
   const [admins, setAdmins] = useState<SuperInstitutionAdmin[]>([]);
@@ -124,7 +117,7 @@ export default function SuperInstitutionAdminPage() {
     "ALL" | "ACTIVE" | "INACTIVE"
   >("ALL");
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [selectedAdmin, setSelectedAdmin] =
     useState<SuperInstitutionAdmin | null>(null);
   const [formData, setFormData] = useState<SuperInstitutionAdminFormData>({
@@ -212,7 +205,12 @@ export default function SuperInstitutionAdminPage() {
 
   const handleViewAdmin = (admin: SuperInstitutionAdmin) => {
     setSelectedAdmin(admin);
-    setIsViewDialogOpen(true);
+    setViewMode("detail");
+  };
+
+  const handleBackToList = () => {
+    setSelectedAdmin(null);
+    setViewMode("list");
   };
 
   const filteredAdmins = admins.filter((admin) => {
@@ -260,6 +258,37 @@ export default function SuperInstitutionAdminPage() {
     });
   };
 
+  function AccordionSection({
+    title,
+    children,
+    defaultOpen = false,
+  }: {
+    title: string;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+  }) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+      <div className="rounded-lg border bg-white">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left"
+        >
+          <span className="font-medium text-sm sm:text-base text-gray-900">
+            {title}
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 text-gray-500 transition-transform ${
+              open ? "rotate-180" : "rotate-0"
+            }`}
+          />
+        </button>
+        {open && <div className="px-4 sm:px-6 pb-5">{children}</div>}
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -272,83 +301,100 @@ export default function SuperInstitutionAdminPage() {
     <div className="p-6 space-y-6 min-h-[calc(100vh-125px)]">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="space-y-4">
-          {/* Filter Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-lg text-neutral-700 mr-4">
-              All Super Institution Admins
-            </h1>
-            <Button
-              variant={statusFilter === "ALL" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("ALL")}
-              className={
-                statusFilter === "ALL"
-                  ? "bg-brand-gradient text-white rounded-full"
-                  : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-              }
-            >
-              All ({stats.total})
-            </Button>
-            <Button
-              variant={statusFilter === "ACTIVE" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("ACTIVE")}
-              className={
-                statusFilter === "ACTIVE"
-                  ? "bg-brand-gradient text-white rounded-full"
-                  : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-              }
-            >
-              Active ({stats.active})
-            </Button>
-            <Button
-              variant={statusFilter === "INACTIVE" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter("INACTIVE")}
-              className={
-                statusFilter === "INACTIVE"
-                  ? "bg-brand-gradient text-white rounded-full"
-                  : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-              }
-            >
-              Inactive ({stats.inactive})
-            </Button>
-          </div>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {!showCreateForm && (
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search admins..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
-                style={{
-                  background:
-                    "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
-                }}
-              />
+        <div>
+          {viewMode === "detail" ? (
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" onClick={handleBackToList}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-2xl text-neutral-700 font-semibold tracking-tight">
+                  Super Institution Admin Details
+                </h1>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Filter Buttons */}
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-lg text-neutral-700 mr-4">
+                  All Super Institution Admins
+                </h1>
+                <Button
+                  variant={statusFilter === "ALL" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("ALL")}
+                  className={
+                    statusFilter === "ALL"
+                      ? "bg-brand-gradient text-white rounded-full"
+                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
+                  }
+                >
+                  All ({stats.total})
+                </Button>
+                <Button
+                  variant={statusFilter === "ACTIVE" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("ACTIVE")}
+                  className={
+                    statusFilter === "ACTIVE"
+                      ? "bg-brand-gradient text-white rounded-full"
+                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
+                  }
+                >
+                  Active ({stats.active})
+                </Button>
+                <Button
+                  variant={statusFilter === "INACTIVE" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("INACTIVE")}
+                  className={
+                    statusFilter === "INACTIVE"
+                      ? "bg-brand-gradient text-white rounded-full"
+                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
+                  }
+                >
+                  Inactive ({stats.inactive})
+                </Button>
+              </div>
             </div>
           )}
-          <Button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="whitespace-nowrap"
-          >
-            {showCreateForm ? (
-              <>
-                <X className="mr-2 h-4 w-4" />
-                Cancel
-              </>
-            ) : (
-              <>
-                <Plus className="mr-2 h-4 w-4" />
-                New Super Institution Admin
-              </>
-            )}
-          </Button>
         </div>
+        {viewMode === "list" && (
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            {!showCreateForm && (
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search admins..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                  }}
+                />
+              </div>
+            )}
+            <Button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="whitespace-nowrap"
+            >
+              {showCreateForm ? (
+                <>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancel
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Super Institution Admin
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Create Super Institution Admin Form */}
@@ -542,254 +588,287 @@ export default function SuperInstitutionAdminPage() {
         </Card>
       )}
 
-      {/* Admins Table */}
-      {!showCreateForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Super Institution Admins</CardTitle>
-          </CardHeader>
-          <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Last Login</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedAdmins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4" />
-                      <span>{admin.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4" />
-                      <span>{admin.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{admin.role}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={admin.isActive ? "default" : "secondary"}>
-                      {admin.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{formatDate(admin.createdAt)}</TableCell>
-                  <TableCell>
-                    {admin.lastLogin ? formatDate(admin.lastLogin) : "Never"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewAdmin(admin)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-
-          {/* Pagination */}
-          {filteredAdmins.length > 0 && (
-            <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
-              {/* Pagination Controls */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                {/* Items per page selector */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Showing:</span>
-                  <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
-                    <SelectTrigger
-                      className="w-20 border-0 focus:border-orange-400 focus:ring-orange-400"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
-                      }}
-                    >
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="5">5</SelectItem>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="25">25</SelectItem>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <span className="text-sm text-muted-foreground">of {filteredAdmins.length} admins</span>
-                </div>
-
-                {/* Page navigation */}
-                {totalPages > 1 && (
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
-                    </Button>
-
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        let pageNumber;
-                        if (totalPages <= 5) {
-                          pageNumber = i + 1;
-                        } else if (currentPage <= 3) {
-                          pageNumber = i + 1;
-                        } else if (currentPage >= totalPages - 2) {
-                          pageNumber = totalPages - 4 + i;
-                        } else {
-                          pageNumber = currentPage - 2 + i;
-                        }
-
-                        return (
-                          <Button
-                            key={pageNumber}
-                            variant={currentPage === pageNumber ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(pageNumber)}
-                            className={
-                              currentPage === pageNumber
-                                ? "bg-brand-gradient text-white"
-                                : ""
-                            }
+      {/* Admins List or Detail View */}
+      {!showCreateForm && viewMode === "list" && (
+        <Card className="py-0">
+          <CardContent className="p-0">
+            <div className="rounded-lg border overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader className="p-2">
+                    <TableRow className="bg-brand-gradient text-white p-2">
+                      <TableHead className="text-white">Name</TableHead>
+                      <TableHead className="text-white">Email</TableHead>
+                      <TableHead className="text-white">Role</TableHead>
+                      <TableHead className="text-white">Status</TableHead>
+                      <TableHead className="text-white text-right">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedAdmins.map((admin) => (
+                      <TableRow key={admin.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center space-x-2">
+                            <User className="h-4 w-4" />
+                            <span>{admin.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Mail className="h-4 w-4" />
+                            <span>{admin.email}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="border-orange-400 text-orange-600"
                           >
-                            {pageNumber}
+                            {admin.role}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={`${
+                              admin.isActive
+                                ? "bg-transparent text-orange-600 border border-orange-400"
+                                : "bg-gray-200 text-gray-600"
+                            }`}
+                          >
+                            {admin.isActive ? "Active" : "Inactive"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            onClick={() => handleViewAdmin(admin)}
+                            className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
+                          >
+                            View
                           </Button>
-                        );
-                      })}
-                    </div>
-
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
-                      Next
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* Pagination Controls */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-2">
+              {/* Items per page selector */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Showing:</span>
+                <Select
+                  value={itemsPerPage.toString()}
+                  onValueChange={handleItemsPerPageChange}
+                >
+                  <SelectTrigger
+                    className="w-20 border-0 focus:border-orange-400 focus:ring-orange-400"
+                    style={{
+                      background:
+                        "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                    }}
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-muted-foreground">
+                  of {filteredAdmins.length} admins
+                </span>
+              </div>
+
+              {/* Page navigation */}
+              {totalPages > 1 && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNumber;
+                      if (totalPages <= 5) {
+                        pageNumber = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNumber = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNumber = totalPages - 4 + i;
+                      } else {
+                        pageNumber = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <Button
+                          key={pageNumber}
+                          variant={
+                            currentPage === pageNumber ? "default" : "outline"
+                          }
+                          size="sm"
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={
+                            currentPage === pageNumber
+                              ? "bg-brand-gradient text-white"
+                              : ""
+                          }
+                        >
+                          {pageNumber}
+                        </Button>
+                      );
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
-      {/* View Admin Dialog */}
-      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader className="text-left pb-6">
-            <DialogTitle className="text-xl font-semibold text-gray-900">
-              Super Institution Admin Details
-            </DialogTitle>
-            <div className="w-full h-px bg-gray-200 mt-4"></div>
-          </DialogHeader>
-          {selectedAdmin && (
-            <div className="space-y-6 py-4">
-              <div className="grid gap-6 md:grid-cols-2">
-                {/* Left Column */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Name
-                    </Label>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg bg-gray-50">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium">{selectedAdmin.name}</span>
-                    </div>
+      {/* Detail View */}
+      {!showCreateForm && viewMode === "detail" && selectedAdmin && (
+        <Card className="py-0">
+          <CardContent className="p-8">
+            <div className="space-y-8">
+              {/* Header Section */}
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-6">
+                  {/* Avatar */}
+                  <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <span className="text-3xl font-medium text-primary">
+                      {selectedAdmin.name.charAt(0).toUpperCase()}
+                    </span>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Email
-                    </Label>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg bg-gray-50">
-                      <Mail className="h-4 w-4 text-gray-500" />
-                      <span>{selectedAdmin.email}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Role
-                    </Label>
-                    <div className="p-3 border rounded-lg bg-gray-50">
-                      <Badge variant="outline" className="font-medium">
-                        {selectedAdmin.role}
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Right Column */}
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Status
-                    </Label>
-                    <div className="p-3 border rounded-lg bg-gray-50">
-                      <Badge
-                        variant={
-                          selectedAdmin.isActive ? "default" : "secondary"
-                        }
-                        className="font-medium"
-                      >
-                        {selectedAdmin.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Created
-                    </Label>
-                    <div className="p-3 border rounded-lg bg-gray-50">
-                      <span className="text-sm">
-                        {formatDate(selectedAdmin.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700">
-                      Last Login
-                    </Label>
-                    <div className="p-3 border rounded-lg bg-gray-50">
-                      <span className="text-sm">
-                        {selectedAdmin.lastLogin
-                          ? formatDate(selectedAdmin.lastLogin)
-                          : "Never"}
-                      </span>
-                    </div>
+                  {/* Admin Info */}
+                  <div className="flex-1">
+                    <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+                      {selectedAdmin.name}
+                    </h1>
+                    <p className="text-xl text-gray-600 mb-4">
+                      Super Institution Admin
+                    </p>
                   </div>
                 </div>
+                <Badge
+                  className={`text-sm ${
+                    selectedAdmin.isActive
+                      ? "bg-transparent text-orange-600 border border-orange-400"
+                      : "bg-gray-200 text-gray-600"
+                  }`}
+                >
+                  {selectedAdmin.isActive ? "Active" : "Inactive"}
+                </Badge>
+              </div>
+
+              {/* Accordion sections */}
+              <div className="space-y-3">
+                <AccordionSection title="Overview" defaultOpen>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm text-gray-600">Email</p>
+                          <p className="font-medium">{selectedAdmin.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <User className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <p className="text-sm text-gray-600">Role</p>
+                          <p className="font-medium">{selectedAdmin.role}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Status</span>
+                        <Badge
+                          className={`${
+                            selectedAdmin.isActive
+                              ? "bg-transparent text-orange-600 border border-orange-400"
+                              : "bg-gray-200 text-gray-600"
+                          }`}
+                        >
+                          {selectedAdmin.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Created</span>
+                        <span>{formatDate(selectedAdmin.createdAt)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Last Login</span>
+                        <span>
+                          {selectedAdmin.lastLogin
+                            ? formatDate(selectedAdmin.lastLogin)
+                            : "Never"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </AccordionSection>
+
+                <AccordionSection title="Permissions">
+                  <p className="text-sm text-gray-600">
+                    Full access to institution management and admin functions
+                  </p>
+                </AccordionSection>
+
+                <AccordionSection title="Activity">
+                  <p className="text-sm text-gray-600">Coming soon</p>
+                </AccordionSection>
+
+                <AccordionSection title="Analytics summary">
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-600 mb-1">Created</div>
+                      <div>{formatDate(selectedAdmin.createdAt)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600 mb-1">Last Updated</div>
+                      <div>{formatDate(selectedAdmin.updatedAt)}</div>
+                    </div>
+                  </div>
+                </AccordionSection>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-4 pt-6 border-t">
+                <Button variant="outline" onClick={handleBackToList}>
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back to List
+                </Button>
               </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -30,9 +30,9 @@ const navigation = [
   },
   { name: "Students", href: "/dashboard/students", iconName: "students" },
   {
-    name: "Super Institution Admin",
+    name: "Super Institution",
     href: "/dashboard/super-institution-admin",
-    iconName: "super-institution-admin",
+    iconName: "institutions",
   },
   {
     name: "Assign Features",

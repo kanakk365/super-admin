@@ -14,13 +14,10 @@ import {
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { apiClient, handleApiError } from "@/lib/api";
 import { setToken } from "@/lib/jwt-utils";
-import type { LoginCredentials, RegisterData, AuthResponse } from "@/lib/types";
+import type { LoginCredentials, AuthResponse } from "@/lib/types";
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
     email: "",
     password: "",
   });
@@ -45,62 +42,35 @@ export default function LoginPage() {
     setError("");
 
     try {
-      if (isLogin) {
-        // Login request
-        const credentials: LoginCredentials = {
-          email: formData.email,
-          password: formData.password,
-        };
+      // Login request
+      const credentials: LoginCredentials = {
+        email: formData.email,
+        password: formData.password,
+      };
 
-        const response: AuthResponse = await apiClient.login(credentials);
+      const response: AuthResponse = await apiClient.login(credentials);
 
-        // Debug logging
-        console.log("Login response received:", response);
-        console.log("Response success:", response.success);
-        console.log("Response data:", response.data);
-        console.log("Response admin:", response.data?.admin);
-        console.log("Response token:", response.data?.token);
+      // Debug logging
+      console.log("Login response received:", response);
+      console.log("Response success:", response.success);
+      console.log("Response data:", response.data);
+      console.log("Response admin:", response.data?.admin);
+      console.log("Response token:", response.data?.token);
 
-        if (response.success && response.data?.admin && response.data?.token) {
-          // Store token using utility function
-          setToken(response.data.token);
+      if (response.success && response.data?.admin && response.data?.token) {
+        // Store token using utility function
+        setToken(response.data.token);
 
-          // Debug token storage
-          console.log("Token stored:", response.data.token);
-          console.log("Token retrieved:", localStorage.getItem("authToken"));
+        // Debug token storage
+        console.log("Token stored:", response.data.token);
+        console.log("Token retrieved:", localStorage.getItem("authToken"));
 
-          console.log("Login successful, redirecting to dashboard");
-          // Success - redirect to dashboard
-          router.push("/dashboard");
-        } else {
-          console.log("Login failed, showing error");
-          setError(response.message || response.error || "Login failed");
-        }
+        console.log("Login successful, redirecting to dashboard");
+        // Success - redirect to dashboard
+        router.push("/dashboard");
       } else {
-        // Register request
-        const userData: RegisterData = {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-        };
-
-        const response: AuthResponse = await apiClient.register(userData);
-
-        if (response.success) {
-          // Success - redirect to login
-          setIsLogin(true);
-          setFormData({
-            firstName: "",
-            lastName: "",
-            email: formData.email, // Keep email for easy login
-            password: "",
-          });
-          setError("");
-          // Could also show a success message here
-        } else {
-          setError(response.message || "Registration failed");
-        }
+        console.log("Login failed, showing error");
+        setError(response.message || response.error || "Login failed");
       }
     } catch (err) {
       setError(handleApiError(err));
@@ -109,73 +79,22 @@ export default function LoginPage() {
     }
   };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setError("");
-    setFormData({
-      firstName: "",
-      lastName: "",
-      email: "",
-      password: "",
-    });
-  };
-
-  // UI text variants
-  const title = isLogin ? "Sign in to your Account" : "Create your Account";
-  const subtitle = isLogin
-    ? "Enter your email to get started"
-    : "Fill in the details to create your admin account";
-
   return (
     <div
-      className="min-h-screen bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 flex items-center justify-center p-4"
+      className="min-h-screen flex items-center justify-center p-4"
     >
       <div className="w-full max-w-md">
         <Card className="shadow-xl backdrop-blur rounded-2xl border border-slate-100">
           <CardHeader className="space-y-2 text-center">
             <CardTitle className="text-2xl font-semibold tracking-tight text-slate-900">
-              {title}
+              Sign in to your Account
             </CardTitle>
             <CardDescription className="text-slate-500 text-sm">
-              {subtitle}
+              Enter your email to get started
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-5">
-              {!isLogin && (
-                <div className="flex gap-3">
-                  <div className="w-1/2">
-                    <label htmlFor="firstName" className="sr-only">
-                      First Name
-                    </label>
-                    <Input
-                      id="firstName"
-                      name="firstName"
-                      type="text"
-                      placeholder="First name"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      required
-                      className="h-12 rounded-lg bg-slate-100 focus:bg-white border border-transparent focus:border-slate-300 text-slate-900 placeholder:text-slate-500 px-4 transition"
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <label htmlFor="lastName" className="sr-only">
-                      Last Name
-                    </label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      type="text"
-                      placeholder="Last name"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      className="h-12 rounded-lg bg-slate-100 focus:bg-white border border-transparent focus:border-slate-300 text-slate-900 placeholder:text-slate-500 px-4 transition"
-                    />
-                  </div>
-                </div>
-              )}
-
               <div>
                 <label htmlFor="email" className="sr-only">
                   Email
@@ -235,26 +154,13 @@ export default function LoginPage() {
                 {loading ? (
                   <div className="flex items-center justify-center gap-2">
                     <div className="w-4 h-4 border-2 border-white/70 border-t-transparent rounded-full animate-spin" />
-                    <span>{isLogin ? "Signing in..." : "Creating account..."}</span>
+                    <span>Signing in...</span>
                   </div>
                 ) : (
-                  <span>{isLogin ? "Sign In" : "Create Account"}</span>
+                  <span>Sign In</span>
                 )}
               </Button>
             </form>
-
-            <div className="mt-6 text-center">
-              <p className="text-sm text-slate-600">
-                {isLogin ? "Don't have an account?" : "Already have an account?"}
-                <button
-                  type="button"
-                  onClick={toggleMode}
-                  className="ml-1 font-medium text-orange-600 hover:text-orange-500 underline"
-                >
-                  {isLogin ? "Sign up" : "Sign in"}
-                </button>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -161,7 +161,7 @@ export default function InstitutionsPage() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left"
-       >
+        >
           <span className="font-medium text-sm sm:text-base text-gray-900">
             {title}
           </span>
@@ -361,7 +361,10 @@ export default function InstitutionsPage() {
   const totalPages = Math.ceil(filteredInstitutions.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedInstitutions = filteredInstitutions.slice(startIndex, endIndex);
+  const paginatedInstitutions = filteredInstitutions.slice(
+    startIndex,
+    endIndex
+  );
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -437,13 +440,11 @@ export default function InstitutionsPage() {
             <div className="flex items-center gap-4">
               <Button variant="ghost" onClick={handleBackToList}>
                 <ArrowLeft className="mr-2 h-4 w-4" />
-                
               </Button>
               <div>
                 <h1 className="text-2xl text-neutral-700 font-semibold tracking-tight">
                   Institution Details
                 </h1>
-                
               </div>
             </div>
           ) : (
@@ -554,7 +555,10 @@ export default function InstitutionsPage() {
                 <div className="space-y-4">
                   {/* Institution name */}
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="name"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Institution name
                     </Label>
                     <Input
@@ -570,14 +574,18 @@ export default function InstitutionsPage() {
                       required
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
 
                   {/* Affiliated Board/University */}
                   <div className="space-y-2">
-                    <Label htmlFor="affiliatedBoard" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="affiliatedBoard"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Affiliated Board/University
                     </Label>
                     <Input
@@ -592,14 +600,18 @@ export default function InstitutionsPage() {
                       }
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
 
                   {/* Official Phone Number / Landline */}
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="phone"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Official Phone Number / Landline
                     </Label>
                     <Input
@@ -615,36 +627,79 @@ export default function InstitutionsPage() {
                       required
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+                  {/* Institution Address */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="address"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Institution Address
+                    </Label>
+                    <Textarea
+                      id="address"
+                      placeholder="Type address info"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400 resize-y overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                        minHeight: "44px",
+                      }}
+                      value={formData.address}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          address: e.target.value,
+                        }));
+                        // Auto-resize functionality
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = target.scrollHeight + "px";
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = target.scrollHeight + "px";
                       }}
                     />
                   </div>
 
-                  {/* Year of Establishment (optional) */}
                   <div className="space-y-2">
-                    <Label htmlFor="yearOfEstablishment" className="text-sm font-medium text-gray-700">
-                      Year of Establishment (optional)
+                    <Label
+                      htmlFor="email"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Official Email Address
                     </Label>
                     <Input
-                      id="yearOfEstablishment"
-                      placeholder="Enter year of establishment"
-                      value={formData.yearOfEstablishment}
+                      id="email"
+                      type="email"
+                      placeholder="Enter Email"
+                      value={formData.email}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          yearOfEstablishment: e.target.value,
+                          email: e.target.value,
                         }))
                       }
+                      required
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
-
                   {/* Upload Proof of Institution */}
                   <div className="space-y-2">
-                    <Label htmlFor="proofOfInstitution" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="proofOfInstitution"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Upload Proof of Institution
                     </Label>
                     <div className="relative">
@@ -669,35 +724,16 @@ export default function InstitutionsPage() {
                       </p>
                     )}
                   </div>
-
-                  {/* Institution Address */}
-                  <div className="space-y-2">
-                    <Label htmlFor="address" className="text-sm font-medium text-gray-700">
-                      Institution Address
-                    </Label>
-                    <Textarea
-                      id="address"
-                      placeholder="Type address info"
-                      className="min-h-[100px] border-0 focus:border-orange-400 focus:ring-orange-400 resize-none"
-                      style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
-                      }}
-                      value={formData.address}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          address: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
                 </div>
 
                 {/* Right Column */}
                 <div className="space-y-4">
                   {/* Type of Institution */}
                   <div className="space-y-2">
-                    <Label htmlFor="type" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="type"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Type of Institution
                     </Label>
                     <Input
@@ -712,38 +748,43 @@ export default function InstitutionsPage() {
                       }
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
 
-                  {/* Official Email Address */}
+                  {/* Year of Establishment (optional) */}
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                      Official Email Address
+                    <Label
+                      htmlFor="yearOfEstablishment"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Year of Establishment (optional)
                     </Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="Enter Email"
-                      value={formData.email}
+                      id="yearOfEstablishment"
+                      placeholder="Enter year of establishment"
+                      value={formData.yearOfEstablishment}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          email: e.target.value,
+                          yearOfEstablishment: e.target.value,
                         }))
                       }
-                      required
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
-
                   {/* Website URL (optional) */}
                   <div className="space-y-2">
-                    <Label htmlFor="website" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="website"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Website URL (optional)
                     </Label>
                     <Input
@@ -758,14 +799,18 @@ export default function InstitutionsPage() {
                       }
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
 
                   {/* Total Student Strength (optional) */}
                   <div className="space-y-2">
-                    <Label htmlFor="totalStudentStrength" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="totalStudentStrength"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Total Student Strength (optional)
                     </Label>
                     <Input
@@ -780,14 +825,18 @@ export default function InstitutionsPage() {
                       }
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
 
                   {/* Password */}
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="password"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Password
                     </Label>
                     <Input
@@ -803,14 +852,18 @@ export default function InstitutionsPage() {
                       }
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
 
                   {/* Institution Logo */}
                   <div className="space-y-2">
-                    <Label htmlFor="logo" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="logo"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Institution Logo
                     </Label>
                     <div className="relative">
@@ -837,7 +890,10 @@ export default function InstitutionsPage() {
               {/* Additional Fields for Backend Compatibility */}
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="primaryColor" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="primaryColor"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Primary Color
                   </Label>
                   <div className="flex items-center gap-2">
@@ -866,7 +922,10 @@ export default function InstitutionsPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="secondaryColor" className="text-sm font-medium text-gray-700">
+                  <Label
+                    htmlFor="secondaryColor"
+                    className="text-sm font-medium text-gray-700"
+                  >
                     Secondary Color
                   </Label>
                   <div className="flex items-center gap-2">
@@ -1123,14 +1182,17 @@ export default function InstitutionsPage() {
                     {/* Pagination and Summary */}
                     {filteredInstitutions.length > 0 && (
                       <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
-                        
-
                         {/* Pagination Controls */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           {/* Items per page selector */}
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Showing:</span>
-                            <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                            <span className="text-sm text-muted-foreground">
+                              Showing:
+                            </span>
+                            <Select
+                              value={itemsPerPage.toString()}
+                              onValueChange={handleItemsPerPageChange}
+                            >
                               <SelectTrigger className="w-20">
                                 <SelectValue />
                               </SelectTrigger>
@@ -1142,7 +1204,9 @@ export default function InstitutionsPage() {
                                 <SelectItem value="100">100</SelectItem>
                               </SelectContent>
                             </Select>
-                            <span className="text-sm text-muted-foreground">of {filteredInstitutions.length} institutions</span>
+                            <span className="text-sm text-muted-foreground">
+                              of {filteredInstitutions.length} institutions
+                            </span>
                           </div>
 
                           {/* Page navigation */}
@@ -1151,7 +1215,9 @@ export default function InstitutionsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handlePageChange(currentPage - 1)}
+                                onClick={() =>
+                                  handlePageChange(currentPage - 1)
+                                }
                                 disabled={currentPage === 1}
                               >
                                 <ChevronLeft className="h-4 w-4" />
@@ -1159,40 +1225,51 @@ export default function InstitutionsPage() {
                               </Button>
 
                               <div className="flex items-center gap-1">
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                  let pageNumber;
-                                  if (totalPages <= 5) {
-                                    pageNumber = i + 1;
-                                  } else if (currentPage <= 3) {
-                                    pageNumber = i + 1;
-                                  } else if (currentPage >= totalPages - 2) {
-                                    pageNumber = totalPages - 4 + i;
-                                  } else {
-                                    pageNumber = currentPage - 2 + i;
-                                  }
+                                {Array.from(
+                                  { length: Math.min(5, totalPages) },
+                                  (_, i) => {
+                                    let pageNumber;
+                                    if (totalPages <= 5) {
+                                      pageNumber = i + 1;
+                                    } else if (currentPage <= 3) {
+                                      pageNumber = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                      pageNumber = totalPages - 4 + i;
+                                    } else {
+                                      pageNumber = currentPage - 2 + i;
+                                    }
 
-                                  return (
-                                    <Button
-                                      key={pageNumber}
-                                      variant={currentPage === pageNumber ? "default" : "outline"}
-                                      size="sm"
-                                      onClick={() => handlePageChange(pageNumber)}
-                                      className={
-                                        currentPage === pageNumber
-                                          ? "bg-brand-gradient text-white"
-                                          : ""
-                                      }
-                                    >
-                                      {pageNumber}
-                                    </Button>
-                                  );
-                                })}
+                                    return (
+                                      <Button
+                                        key={pageNumber}
+                                        variant={
+                                          currentPage === pageNumber
+                                            ? "default"
+                                            : "outline"
+                                        }
+                                        size="sm"
+                                        onClick={() =>
+                                          handlePageChange(pageNumber)
+                                        }
+                                        className={
+                                          currentPage === pageNumber
+                                            ? "bg-brand-gradient text-white"
+                                            : ""
+                                        }
+                                      >
+                                        {pageNumber}
+                                      </Button>
+                                    );
+                                  }
+                                )}
                               </div>
 
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handlePageChange(currentPage + 1)}
+                                onClick={() =>
+                                  handlePageChange(currentPage + 1)
+                                }
                                 disabled={currentPage === totalPages}
                               >
                                 Next
@@ -1278,22 +1355,33 @@ export default function InstitutionsPage() {
                               <Mail className="h-5 w-5 text-gray-400" />
                               <div>
                                 <p className="text-sm text-gray-600">Email</p>
-                                <p className="font-medium">{selectedInstitution.email}</p>
+                                <p className="font-medium">
+                                  {selectedInstitution.email}
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
                               <Phone className="h-5 w-5 text-gray-400" />
                               <div>
                                 <p className="text-sm text-gray-600">Phone</p>
-                                <p className="font-medium">{selectedInstitution.phone}</p>
+                                <p className="font-medium">
+                                  {selectedInstitution.phone}
+                                </p>
                               </div>
                             </div>
                             {selectedInstitution.website && (
                               <div className="flex items-center gap-3">
                                 <Globe className="h-5 w-5 text-gray-400" />
                                 <div>
-                                  <p className="text-sm text-gray-600">Website</p>
-                                  <a href={selectedInstitution.website} target="_blank" rel="noopener noreferrer" className="font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                                  <p className="text-sm text-gray-600">
+                                    Website
+                                  </p>
+                                  <a
+                                    href={selectedInstitution.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                  >
                                     {selectedInstitution.website}
                                     <ExternalLink className="h-3 w-3" />
                                   </a>
@@ -1304,18 +1392,49 @@ export default function InstitutionsPage() {
                               <div className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-gray-400 mt-1" />
                                 <div>
-                                  <p className="text-sm text-gray-600">Address</p>
-                                  <p className="font-medium">{selectedInstitution.address}</p>
+                                  <p className="text-sm text-gray-600">
+                                    Address
+                                  </p>
+                                  <p className="font-medium">
+                                    {selectedInstitution.address}
+                                  </p>
                                 </div>
                               </div>
                             )}
                           </div>
                           <div className="space-y-3 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-600">Type</span><span>{selectedInstitution.type}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Affiliated Board</span><span>{selectedInstitution.affiliatedBoard}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Established</span><span>{selectedInstitution.yearOfEstablishment}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Students</span><span>{selectedInstitution.totalStudentStrength.toLocaleString()}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Status</span><Badge variant={getStatusColor(selectedInstitution.approvalStatus)}>{selectedInstitution.approvalStatus}</Badge></div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Type</span>
+                              <span>{selectedInstitution.type}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">
+                                Affiliated Board
+                              </span>
+                              <span>{selectedInstitution.affiliatedBoard}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Established</span>
+                              <span>
+                                {selectedInstitution.yearOfEstablishment}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Students</span>
+                              <span>
+                                {selectedInstitution.totalStudentStrength.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Status</span>
+                              <Badge
+                                variant={getStatusColor(
+                                  selectedInstitution.approvalStatus
+                                )}
+                              >
+                                {selectedInstitution.approvalStatus}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </AccordionSection>
@@ -1336,11 +1455,17 @@ export default function InstitutionsPage() {
                         <div className="grid md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <div className="text-gray-600 mb-1">Created</div>
-                            <div>{formatDate(selectedInstitution.createdAt)}</div>
+                            <div>
+                              {formatDate(selectedInstitution.createdAt)}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-gray-600 mb-1">Last Updated</div>
-                            <div>{formatDate(selectedInstitution.updatedAt)}</div>
+                            <div className="text-gray-600 mb-1">
+                              Last Updated
+                            </div>
+                            <div>
+                              {formatDate(selectedInstitution.updatedAt)}
+                            </div>
                           </div>
                         </div>
                       </AccordionSection>

@@ -15,6 +15,9 @@ export const API_CONFIG = {
     BLOGS: "/super-admin/blogs",
     ROLES: "/super-admin/roles",
     HEALTH: "/super-admin/health",
+    ANALYTICS: {
+      MONTHLY: "/super-admin/analytics/monthly", // Assumed endpoint for monthly metrics
+    },
   },
 };
 
@@ -128,6 +131,12 @@ class ApiClient {
     return this.request<HealthCheckResponse>(API_CONFIG.ENDPOINTS.HEALTH, {
       method: "GET",
     });
+  }
+
+  // Analytics
+  async getMonthlyAnalytics(params?: { year?: number }): Promise<unknown> {
+    const query = params?.year ? `?year=${params.year}` : "";
+    return this.get(`${API_CONFIG.ENDPOINTS.ANALYTICS.MONTHLY}${query}`);
   }
 
   // Generic CRUD methods

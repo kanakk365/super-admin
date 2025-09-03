@@ -3,12 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   Activity,
-  Users,
-  Building2,
-  FileText,
-  UserPlus,
   AlertCircle,
-  BarChart3,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { apiClient, handleApiError } from "@/lib/api";
-import DashboardChart from "@/components/ui/dashboard-chart";
+import { ChartBarInteractive } from "@/components/ui/bar-chart";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -49,14 +44,6 @@ interface DashboardStats {
 
 // Chart data shape handled inside component; no explicit interface needed here
 
-interface QuickAction {
-  title: string;
-  description: string;
-  icon: React.ComponentType<{ className?: string }>;
-  href: string;
-  color: string;
-}
-
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalStudents: 0,
@@ -71,10 +58,14 @@ export default function Dashboard() {
   // Removed recentActivity state (not used in updated design)
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedChartData, setSelectedChartData] = useState<
-    "students" | "institutions" | "blogs"
-  >("students");
-  const [chartLoading, setChartLoading] = useState(false);
+
+  interface UserChartData {
+    date: string;
+    users: number;
+    month: string;
+  }
+
+  const [userChartData, setUserChartData] = useState<UserChartData[]>([]);
   interface InstitutionRow {
     id: string;
     name?: string;
@@ -88,36 +79,69 @@ export default function Dashboard() {
   const [monthFilter, setMonthFilter] = useState<string>("all");
   const currentYear = new Date().getFullYear();
 
-  const quickActions: QuickAction[] = [
-    {
-      title: "Add Student",
-      description: "Register a new student",
-      icon: UserPlus,
-      href: "/dashboard/students",
-      color: "bg-blue-500",
-    },
-    {
-      title: "New Institution",
-      description: "Add an educational institution",
-      icon: Building2,
-      href: "/dashboard/institutions",
-      color: "bg-green-500",
-    },
-    {
-      title: "Create Blog",
-      description: "Write a new blog post",
-      icon: FileText,
-      href: "/dashboard/blogs",
-      color: "bg-purple-500",
-    },
-    {
-      title: "Manage Roles",
-      description: "Configure user permissions",
-      icon: Users,
-      href: "/dashboard/roles",
-      color: "bg-orange-500",
-    },
-  ];
+
+
+  const processUserDataByMonth = (users: { createdAt?: string }[]) => {
+    const monthData: { [key: string]: number } = {};
+    const currentYear = new Date().getFullYear();
+
+    // Process all users (no filtering by date)
+    users.forEach((user) => {
+      if (user.createdAt) {
+        const date = new Date(user.createdAt);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        monthData[monthKey] = (monthData[monthKey] || 0) + 1;
+      }
+    });
+
+    // Generate all 12 months for the current year
+    const chartData = [];
+
+    for (let month = 1; month <= 12; month++) {
+      const monthKey = `${currentYear}-${String(month).padStart(2, '0')}`;
+      const date = new Date(currentYear, month - 1, 1);
+
+      // Include all months, even if they're in the future (they'll show as 0)
+      chartData.push({
+        date: monthKey + '-01', // Format as YYYY-MM-DD
+        users: monthData[monthKey] || 0,
+        month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+      });
+    }
+
+    // If we have data from the previous year, include those as well
+    const previousYear = currentYear - 1;
+    for (let month = 1; month <= 12; month++) {
+      const monthKey = `${previousYear}-${String(month).padStart(2, '0')}`;
+      if (monthData[monthKey]) {
+        const date = new Date(previousYear, month - 1, 1);
+        chartData.push({
+          date: monthKey + '-01',
+          users: monthData[monthKey],
+          month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        });
+      }
+    }
+
+    // If we have data from next year, include those as well
+    const nextYear = currentYear + 1;
+    for (let month = 1; month <= 12; month++) {
+      const monthKey = `${nextYear}-${String(month).padStart(2, '0')}`;
+      if (monthData[monthKey]) {
+        const date = new Date(nextYear, month - 1, 1);
+        chartData.push({
+          date: monthKey + '-01',
+          users: monthData[monthKey],
+          month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+        });
+      }
+    }
+
+    // Sort the chart data chronologically
+    const sortedData = chartData.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    return sortedData;
+  };
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -125,18 +149,25 @@ export default function Dashboard() {
       setError(null);
 
       // Fetch dashboard statistics with proper endpoints
-      const [institutionsRes, studentsRes, blogsRes] = await Promise.allSettled([
-        apiClient.get("/super-admin/institution"),
-        apiClient.get("/super-admin/users"),
-        apiClient.get("/super-admin/blogs"),
-      ]);
+      const [institutionsRes, studentsRes, blogsRes] = await Promise.allSettled(
+        [
+          apiClient.get("/super-admin/institution"),
+          apiClient.get("/super-admin/users"),
+          apiClient.get("/super-admin/blogs"),
+        ]
+      );
 
-      // Get actual student count from users API
+      // Get actual student count from users API and process for chart
       const studentData =
         studentsRes.status === "fulfilled"
-          ? (studentsRes.value as { data?: unknown[] })
+          ? (studentsRes.value as { data?: { createdAt?: string }[] })
           : null;
-      const studentCount = studentData?.data?.length || 0;
+      const users = studentData?.data || [];
+      const studentCount = users.length;
+
+      // Process user data for monthly bar chart
+      const processedUserData = processUserDataByMonth(users);
+      setUserChartData(processedUserData);
 
       const institutionData =
         institutionsRes.status === "fulfilled"
@@ -207,12 +238,6 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [fetchDashboardData]);
 
-  const handleChartTypeChange = (
-    type: "students" | "institutions" | "blogs"
-  ) => {
-    setSelectedChartData(type);
-  };
-
   // Removed getActivityIcon and getStatusBadge (unused in updated design)
 
   const monthNames = [
@@ -274,12 +299,11 @@ export default function Dashboard() {
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
             Super Admin Dashboard
           </h1>
-          
         </div>
 
         {/* Error State */}
         {error && (
-          <Card className="border-destructive">
+          <Card className="border-destructive hover:shadow-lg hover:shadow-red-200/50 transition-all duration-300">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2 text-destructive">
@@ -304,7 +328,7 @@ export default function Dashboard() {
         {/* Stats Grid (4 cards) */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Institutions */}
-          <Card className="border-0 bg-gray-50 shadow-none">
+          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="h-12 w-12 rounded-full flex items-center justify-center  ">
                 <Image
@@ -326,7 +350,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
           {/* Students */}
-          <Card className="border-0 bg-gray-50 shadow-none ">
+          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="h-12 w-12 rounded-full flex items-center justify-center bg-amber-50">
                 <Image
@@ -348,15 +372,15 @@ export default function Dashboard() {
             </CardContent>
           </Card>
           {/* Active Features */}
-          <Card className="border-0 bg-gray-50 shadow-none">
+          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <Image
-                  src="/active.svg"
-                  alt="Institutions"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7"
-                />
+                src="/active.svg"
+                alt="Institutions"
+                width={28}
+                height={28}
+                className="h-7 w-7"
+              />
               <div>
                 <p className="text-2xl text-neutral-600 font-semibold ">
                   {stats.activeFeatures.toLocaleString()}+
@@ -368,15 +392,15 @@ export default function Dashboard() {
             </CardContent>
           </Card>
           {/* Revenue */}
-          <Card className="border-0 bg-gray-50 shadow-none ">
+          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <Image
-                  src="/revenue.svg"
-                  alt="Institutions"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7"
-                />
+                src="/revenue.svg"
+                alt="Institutions"
+                width={28}
+                height={28}
+                className="h-7 w-7"
+              />
               <div>
                 <p className="text-2xl text-neutral-600 font-semibold ">
                   ₹{stats.revenue.toLocaleString()}
@@ -389,51 +413,24 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Activity Graph */}
-        <Card className="shadow-sm">
+        {/* User Registration Chart */}
+        <Card className="shadow-sm hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg">
-                  Activity Graph
+                  User Registration Activity
                 </CardTitle>
-              </div>
-              <div className="flex items-center gap-3">
-                <Select
-                  value={selectedChartData}
-                  onValueChange={handleChartTypeChange}
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Dataset" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="students">Students</SelectItem>
-                    <SelectItem value="institutions">Institutions</SelectItem>
-                    <SelectItem value="blogs">Blogs</SelectItem>
-                  </SelectContent>
-                </Select>
-                {/* <Select value={"monthly"} onValueChange={() => {}}>
-                  <SelectTrigger className="w-[120px]">
-                    <SelectValue placeholder="Monthly" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                  </SelectContent>
-                </Select> */}
               </div>
             </div>
           </CardHeader>
           <CardContent className="px-2 sm:px-6">
-            <DashboardChart
-              chartType={selectedChartData}
-              loading={chartLoading}
-              onLoadingChange={setChartLoading}
-            />
+            <ChartBarInteractive userData={userChartData} />
           </CardContent>
         </Card>
 
         {/* Recently added Institutions */}
-        <Card className="shadow-sm">
+        <Card className="shadow-sm hover:shadow-lg hover:shadow-gray-200/50 transition-all duration-300">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-0">
             <div>
               <CardTitle className="text-lg">

@@ -91,7 +91,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                     <motion.div
                       layoutId="sidebar-active-bg"
                       transition={{ type: "spring", stiffness: 240, damping: 28, mass: 1 }}
-                      className="absolute inset-0 -mx-2 bg-orange-500 rounded-md z-0"
+                      className="absolute inset-0 -mx-2 bg-brand-gradient rounded-md z-0"
                     />
                   )}
                   {!isActive && hoveredIndex === index && (
@@ -168,7 +168,7 @@ const NavItems = memo(({ pathname, user, handleClose, handleNavigation, memoized
                         <motion.div
                           layoutId="sidebar-profile-active-bg"
                           transition={{ type: "spring", stiffness: 240, damping: 28, mass: 1 }}
-                          className="absolute inset-0 -mx-2 bg-orange-500 rounded-md z-0"
+                          className="absolute inset-0 -mx-2 bg-brand-gradient rounded-md z-0"
                         />
                       )}
                       {!isActive && hoveredIndex === adjustedIndex && (

@@ -403,19 +403,7 @@ export default function InstitutionsPage() {
     setViewMode("list");
   };
 
-  // Get status color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "APPROVED":
-        return "default";
-      case "PENDING":
-        return "secondary";
-      case "REJECTED":
-        return "destructive";
-      default:
-        return "secondary";
-    }
-  };
+
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -1131,9 +1119,13 @@ export default function InstitutionsPage() {
                                   {/* Status Column */}
                                   <TableCell className="px-4">
                                     <Badge
-                                      variant={getStatusColor(
-                                        institution.approvalStatus
-                                      )}
+                                      className={`${
+                                        institution.approvalStatus === "APPROVED"
+                                          ? "bg-transparent text-orange-600 border border-orange-400"
+                                          : institution.approvalStatus === "PENDING"
+                                          ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
+                                          : "bg-red-100 text-red-800 border border-red-400"
+                                      }`}
                                     >
                                       {institution.approvalStatus}
                                     </Badge>
@@ -1337,10 +1329,13 @@ export default function InstitutionsPage() {
                         </div>
                       </div>
                       <Badge
-                        variant={getStatusColor(
-                          selectedInstitution.approvalStatus
-                        )}
-                        className="text-sm"
+                        className={`text-sm ${
+                          selectedInstitution.approvalStatus === "APPROVED"
+                            ? "bg-transparent text-orange-600 border border-orange-400"
+                            : selectedInstitution.approvalStatus === "PENDING"
+                            ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
+                            : "bg-red-100 text-red-800 border border-red-400"
+                        }`}
                       >
                         {selectedInstitution.approvalStatus}
                       </Badge>
@@ -1428,9 +1423,13 @@ export default function InstitutionsPage() {
                             <div className="flex justify-between">
                               <span className="text-gray-600">Status</span>
                               <Badge
-                                variant={getStatusColor(
-                                  selectedInstitution.approvalStatus
-                                )}
+                                className={`${
+                                  selectedInstitution.approvalStatus === "APPROVED"
+                                    ? "bg-transparent text-orange-600 border border-orange-400"
+                                    : selectedInstitution.approvalStatus === "PENDING"
+                                    ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
+                                    : "bg-red-100 text-red-800 border border-red-400"
+                                }`}
                               >
                                 {selectedInstitution.approvalStatus}
                               </Badge>

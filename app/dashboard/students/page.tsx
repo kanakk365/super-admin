@@ -309,21 +309,7 @@ export default function StudentsPage() {
     });
   };
 
-  // Get status color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Active":
-        return "default";
-      case "Inactive":
-        return "secondary";
-      case "Verified":
-        return "default";
-      case "Unverified":
-        return "outline";
-      default:
-        return "secondary";
-    }
-  };
+
 
   // Load students on component mount
   useEffect(() => {
@@ -496,24 +482,7 @@ export default function StudentsPage() {
                     />
                   </div>
 
-                  {/* Last Name */}
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
-                      Last Name
-                    </Label>
-                    <Input
-                      id="lastName"
-                      name="lastName"
-                      placeholder="Enter last name"
-                      value={createFormData.lastName}
-                      onChange={handleCreateFormChange}
-                      required
-                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
-                      style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
-                      }}
-                    />
-                  </div>
+                  
 
                   {/* Email Address */}
                   <div className="space-y-2">
@@ -538,6 +507,24 @@ export default function StudentsPage() {
 
                 {/* Right Column */}
                 <div className="space-y-4">
+                  {/* Last Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                      Last Name
+                    </Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      placeholder="Enter last name"
+                      value={createFormData.lastName}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
                   {/* Password */}
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-sm font-medium text-gray-700">
@@ -710,9 +697,11 @@ export default function StudentsPage() {
                                   {/* Status Column */}
                                   <TableCell className="px-4">
                                     <Badge
-                                      variant={getStatusColor(
-                                        student.isActive ? "Active" : "Inactive"
-                                      )}
+                                      className={`${
+                                        student.isActive
+                                          ? "bg-transparent text-orange-600 border border-orange-400"
+                                          : "bg-gray-200 text-gray-600"
+                                      }`}
                                     >
                                       {student.isActive ? "Active" : "Inactive"}
                                     </Badge>
@@ -721,9 +710,11 @@ export default function StudentsPage() {
                                   {/* Verification Column */}
                                   <TableCell className="px-4">
                                     <Badge
-                                      variant={getStatusColor(
-                                        student.isVerified ? "Verified" : "Unverified"
-                                      )}
+                                      className={`${
+                                        student.isVerified
+                                          ? "bg-transparent text-orange-600 border border-orange-400"
+                                          : "bg-gray-200 text-gray-600"
+                                      }`}
                                     >
                                       {student.isVerified
                                         ? "Verified"
@@ -865,10 +856,11 @@ export default function StudentsPage() {
                         </div>
                       </div>
                       <Badge
-                        variant={getStatusColor(
-                          selectedStudent.isActive ? "Active" : "Inactive"
-                        )}
-                        className="text-sm"
+                        className={`text-sm ${
+                          selectedStudent.isActive
+                            ? "bg-transparent text-orange-600 border border-orange-400"
+                            : "bg-gray-200 text-gray-600"
+                        }`}
                       >
                         {selectedStudent.isActive ? "Active" : "Inactive"}
                       </Badge>
@@ -890,8 +882,8 @@ export default function StudentsPage() {
                           <div className="space-y-3 text-sm">
                             <div className="flex justify-between"><span className="text-gray-600">First Name</span><span>{selectedStudent.firstName}</span></div>
                             <div className="flex justify-between"><span className="text-gray-600">Last Name</span><span>{selectedStudent.lastName}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Status</span><Badge variant={getStatusColor(selectedStudent.isActive ? "Active" : "Inactive")}>{selectedStudent.isActive ? "Active" : "Inactive"}</Badge></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Email Verified</span><Badge variant={getStatusColor(selectedStudent.isVerified ? "Verified" : "Unverified")}>{selectedStudent.isVerified ? "Verified" : "Unverified"}</Badge></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Status</span><Badge className={`${selectedStudent.isActive ? "bg-transparent text-orange-600 border border-orange-400" : "bg-gray-200 text-gray-600"}`}>{selectedStudent.isActive ? "Active" : "Inactive"}</Badge></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Email Verified</span><Badge className={`${selectedStudent.isVerified ? "bg-transparent text-orange-600 border border-orange-400" : "bg-gray-200 text-gray-600"}`}>{selectedStudent.isVerified ? "Verified" : "Unverified"}</Badge></div>
                           </div>
                         </div>
                       </AccordionSection>

@@ -83,7 +83,9 @@ export default function BlogsPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [selectedBlog, setSelectedBlog] = useState<Blog | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
-  const [statusFilter, setStatusFilter] = useState<"ALL" | "PUBLISHED" | "DRAFT" | "ARCHIVED">("ALL");
+  const [statusFilter, setStatusFilter] = useState<
+    "ALL" | "PUBLISHED" | "DRAFT" | "ARCHIVED"
+  >("ALL");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -124,7 +126,7 @@ export default function BlogsPage() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
 
       if (!response.ok) {
@@ -139,13 +141,13 @@ export default function BlogsPage() {
         // Calculate stats
         const total = data.data.length;
         const published = data.data.filter(
-          (blog) => blog.status === "PUBLISHED",
+          (blog) => blog.status === "PUBLISHED"
         ).length;
         const drafts = data.data.filter(
-          (blog) => blog.status === "DRAFT",
+          (blog) => blog.status === "DRAFT"
         ).length;
         const archived = data.data.filter(
-          (blog) => blog.status === "ARCHIVED",
+          (blog) => blog.status === "ARCHIVED"
         ).length;
 
         setStats({ total, published, drafts, archived });
@@ -198,7 +200,7 @@ export default function BlogsPage() {
             Authorization: `Bearer ${token}`,
           },
           body: formDataToSend,
-        },
+        }
       );
 
       if (!response.ok) {
@@ -274,7 +276,7 @@ export default function BlogsPage() {
   // Handle blog actions
   const handleBlogAction = async (
     blogId: string,
-    action: "view" | "edit" | "delete",
+    action: "view" | "edit" | "delete"
   ) => {
     switch (action) {
       case "view":
@@ -290,7 +292,7 @@ export default function BlogsPage() {
         break;
       case "delete":
         const confirmed = window.confirm(
-          "Are you sure you want to delete this blog post?",
+          "Are you sure you want to delete this blog post?"
         );
         if (confirmed) {
           console.log(`Deleting blog ${blogId}`);
@@ -451,7 +453,8 @@ export default function BlogsPage() {
                   placeholder="Search blog posts..."
                   className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                   style={{
-                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                    background:
+                      "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                   }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -494,7 +497,10 @@ export default function BlogsPage() {
                 <div className="space-y-4">
                   {/* Blog Title */}
                   <div className="space-y-2">
-                    <Label htmlFor="title" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="title"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Blog Title
                     </Label>
                     <Input
@@ -510,14 +516,18 @@ export default function BlogsPage() {
                       required
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
 
                   {/* Author */}
                   <div className="space-y-2">
-                    <Label htmlFor="author" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="author"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Author
                     </Label>
                     <Input
@@ -533,14 +543,21 @@ export default function BlogsPage() {
                       required
                       className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                       style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                       }}
                     />
                   </div>
+                </div>
 
+                {/* Right Column */}
+                <div className="space-y-4">
                   {/* Status */}
                   <div className="space-y-2">
-                    <Label htmlFor="status" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="status"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Status
                     </Label>
                     <Select
@@ -549,9 +566,13 @@ export default function BlogsPage() {
                         setFormData((prev) => ({ ...prev, status: value }))
                       }
                     >
-                      <SelectTrigger className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400" style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
-                      }}>
+                      <SelectTrigger
+                        className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                        }}
+                      >
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -560,13 +581,12 @@ export default function BlogsPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-4">
                   {/* Cover Image */}
                   <div className="space-y-2">
-                    <Label htmlFor="coverImage" className="text-sm font-medium text-gray-700">
+                    <Label
+                      htmlFor="coverImage"
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Cover Image
                     </Label>
                     <div className="relative">
@@ -577,7 +597,8 @@ export default function BlogsPage() {
                         onChange={handleFileChange}
                         className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400 pr-10"
                         style={{
-                          background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                          background:
+                            "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                         }}
                       />
                       <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -593,7 +614,10 @@ export default function BlogsPage() {
 
               {/* Content - Full Width */}
               <div className="space-y-2">
-                <Label htmlFor="content" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="content"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Content
                 </Label>
                 <Textarea
@@ -601,7 +625,8 @@ export default function BlogsPage() {
                   placeholder="Enter blog content"
                   className="min-h-[120px] border-0 focus:border-orange-400 focus:ring-orange-400 resize-none"
                   style={{
-                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                    background:
+                      "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
                   }}
                   value={formData.content}
                   onChange={(e) =>
@@ -668,11 +693,7 @@ export default function BlogsPage() {
                   <div className="flex items-center justify-center py-12">
                     <div className="text-center">
                       <p className="text-destructive mb-4">{error}</p>
-                      <Button
-                        onClick={fetchBlogs}
-                        variant="outline"
-                        size="sm"
-                      >
+                      <Button onClick={fetchBlogs} variant="outline" size="sm">
                         Try Again
                       </Button>
                     </div>
@@ -729,8 +750,6 @@ export default function BlogsPage() {
                                   key={blog.id}
                                   className="hover:bg-gray-50"
                                 >
-
-
                                   {/* Title Column */}
                                   <TableCell className="px-4">
                                     <div>
@@ -791,14 +810,17 @@ export default function BlogsPage() {
                     {/* Pagination and Summary */}
                     {filteredBlogs.length > 0 && (
                       <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
-                        
-
                         {/* Pagination Controls */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           {/* Items per page selector */}
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">Showing:</span>
-                            <Select value={itemsPerPage.toString()} onValueChange={handleItemsPerPageChange}>
+                            <span className="text-sm text-muted-foreground">
+                              Showing:
+                            </span>
+                            <Select
+                              value={itemsPerPage.toString()}
+                              onValueChange={handleItemsPerPageChange}
+                            >
                               <SelectTrigger className="w-20">
                                 <SelectValue />
                               </SelectTrigger>
@@ -810,7 +832,9 @@ export default function BlogsPage() {
                                 <SelectItem value="100">100</SelectItem>
                               </SelectContent>
                             </Select>
-                            <span className="text-sm text-muted-foreground">of {filteredBlogs.length} blog posts</span>
+                            <span className="text-sm text-muted-foreground">
+                              of {filteredBlogs.length} blog posts
+                            </span>
                           </div>
 
                           {/* Page navigation */}
@@ -819,7 +843,9 @@ export default function BlogsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handlePageChange(currentPage - 1)}
+                                onClick={() =>
+                                  handlePageChange(currentPage - 1)
+                                }
                                 disabled={currentPage === 1}
                               >
                                 <ChevronLeft className="h-4 w-4" />
@@ -827,40 +853,51 @@ export default function BlogsPage() {
                               </Button>
 
                               <div className="flex items-center gap-1">
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                  let pageNumber;
-                                  if (totalPages <= 5) {
-                                    pageNumber = i + 1;
-                                  } else if (currentPage <= 3) {
-                                    pageNumber = i + 1;
-                                  } else if (currentPage >= totalPages - 2) {
-                                    pageNumber = totalPages - 4 + i;
-                                  } else {
-                                    pageNumber = currentPage - 2 + i;
-                                  }
+                                {Array.from(
+                                  { length: Math.min(5, totalPages) },
+                                  (_, i) => {
+                                    let pageNumber;
+                                    if (totalPages <= 5) {
+                                      pageNumber = i + 1;
+                                    } else if (currentPage <= 3) {
+                                      pageNumber = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                      pageNumber = totalPages - 4 + i;
+                                    } else {
+                                      pageNumber = currentPage - 2 + i;
+                                    }
 
-                                  return (
-                                    <Button
-                                      key={pageNumber}
-                                      variant={currentPage === pageNumber ? "default" : "outline"}
-                                      size="sm"
-                                      onClick={() => handlePageChange(pageNumber)}
-                                      className={
-                                        currentPage === pageNumber
-                                          ? "bg-brand-gradient text-white"
-                                          : ""
-                                      }
-                                    >
-                                      {pageNumber}
-                                    </Button>
-                                  );
-                                })}
+                                    return (
+                                      <Button
+                                        key={pageNumber}
+                                        variant={
+                                          currentPage === pageNumber
+                                            ? "default"
+                                            : "outline"
+                                        }
+                                        size="sm"
+                                        onClick={() =>
+                                          handlePageChange(pageNumber)
+                                        }
+                                        className={
+                                          currentPage === pageNumber
+                                            ? "bg-brand-gradient text-white"
+                                            : ""
+                                        }
+                                      >
+                                        {pageNumber}
+                                      </Button>
+                                    );
+                                  }
+                                )}
                               </div>
 
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handlePageChange(currentPage + 1)}
+                                onClick={() =>
+                                  handlePageChange(currentPage + 1)
+                                }
                                 disabled={currentPage === totalPages}
                               >
                                 Next
@@ -916,31 +953,64 @@ export default function BlogsPage() {
                               <User className="h-5 w-5 text-gray-400" />
                               <div>
                                 <p className="text-sm text-gray-600">Author</p>
-                                <p className="font-medium">{selectedBlog.author}</p>
+                                <p className="font-medium">
+                                  {selectedBlog.author}
+                                </p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
                               <Calendar className="h-5 w-5 text-gray-400" />
                               <div>
                                 <p className="text-sm text-gray-600">Created</p>
-                                <p className="font-medium">{formatDate(selectedBlog.createdAt)}</p>
+                                <p className="font-medium">
+                                  {formatDate(selectedBlog.createdAt)}
+                                </p>
                               </div>
                             </div>
                             {selectedBlog.publishedDate && (
                               <div className="flex items-center gap-3">
                                 <Calendar className="h-5 w-5 text-gray-400" />
                                 <div>
-                                  <p className="text-sm text-gray-600">Published</p>
-                                  <p className="font-medium">{formatDate(selectedBlog.publishedDate)}</p>
+                                  <p className="text-sm text-gray-600">
+                                    Published
+                                  </p>
+                                  <p className="font-medium">
+                                    {formatDate(selectedBlog.publishedDate)}
+                                  </p>
                                 </div>
                               </div>
                             )}
                           </div>
                           <div className="space-y-3 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-600">Status</span><Badge variant={getStatusColor(selectedBlog.status)}>{selectedBlog.status}</Badge></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Last Updated</span><span>{formatDate(selectedBlog.updatedAt)}</span></div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Status</span>
+                              <Badge
+                                variant={getStatusColor(selectedBlog.status)}
+                              >
+                                {selectedBlog.status}
+                              </Badge>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">
+                                Last Updated
+                              </span>
+                              <span>{formatDate(selectedBlog.updatedAt)}</span>
+                            </div>
                             {selectedBlog.coverImageUrl && (
-                              <div className="flex justify-between"><span className="text-gray-600">Cover Image</span><span className="text-blue-600 hover:text-blue-800"><a href={selectedBlog.coverImageUrl} target="_blank" rel="noopener noreferrer">View Image</a></span></div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-600">
+                                  Cover Image
+                                </span>
+                                <span className="text-blue-600 hover:text-blue-800">
+                                  <a
+                                    href={selectedBlog.coverImageUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    View Image
+                                  </a>
+                                </span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -958,10 +1028,14 @@ export default function BlogsPage() {
                         <div className="grid md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <div className="text-gray-600 mb-1">Word Count</div>
-                            <div>{selectedBlog.content.split(/\s+/).length} words</div>
+                            <div>
+                              {selectedBlog.content.split(/\s+/).length} words
+                            </div>
                           </div>
                           <div>
-                            <div className="text-gray-600 mb-1">Character Count</div>
+                            <div className="text-gray-600 mb-1">
+                              Character Count
+                            </div>
                             <div>{selectedBlog.content.length} characters</div>
                           </div>
                         </div>

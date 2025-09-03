@@ -188,7 +188,7 @@ export default function Profile() {
               )}
             </div>
 
-            <div className="flex-1 grid gap-6 md:grid-cols-3">
+            <div className="flex-1 grid gap-6 md:grid-cols-4">
               <div>
                 <div className="text-sm text-muted-foreground">Name</div>
                 {isEditing ? (
@@ -227,6 +227,22 @@ export default function Profile() {
               </div>
 
               <div>
+                <div className="text-sm text-muted-foreground">Phone number</div>
+                {isEditing ? (
+                  <Input
+                    value={editedUser?.phone || ""}
+                    onChange={(e) =>
+                      setEditedUser({ ...editedUser!, phone: e.target.value })
+                    }
+                    placeholder="Enter your phone number"
+                    className="mt-1"
+                  />
+                ) : (
+                  <div className="mt-1 font-medium">{user.phone || "+1 (555) 123-4567"}</div>
+                )}
+              </div>
+
+              <div>
                 <div className="text-sm text-muted-foreground">Password</div>
                 {isEditing ? (
                   <Input
@@ -242,22 +258,6 @@ export default function Profile() {
                   <div className="mt-1 font-medium tracking-widest">
                     {editedUser?.password ? "••••••••" : "••••••••"}
                   </div>
-                )}
-              </div>
-
-              <div className="md:col-span-1">
-                <div className="text-sm text-muted-foreground">Phone number</div>
-                {isEditing ? (
-                  <Input
-                    value={editedUser?.phone || ""}
-                    onChange={(e) =>
-                      setEditedUser({ ...editedUser!, phone: e.target.value })
-                    }
-                    placeholder="Enter your phone number"
-                    className="mt-1"
-                  />
-                ) : (
-                  <div className="mt-1 font-medium">{user.phone || "+1 (555) 123-4567"}</div>
                 )}
               </div>
             </div>

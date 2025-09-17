@@ -35,7 +35,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { handleApiError } from "@/lib/api";
+import { handleApiError, apiClient } from "@/lib/api";
+import type { StudentActivityResponse } from "@/lib/types";
 
 interface Student {
   id: string;
@@ -91,6 +92,10 @@ export default function StudentsPage() {
     lastName: "",
     password: "",
   });
+
+  // Student activity data
+  const [studentActivity, setStudentActivity] = useState<StudentActivityResponse | null>(null);
+  const [activityLoading, setActivityLoading] = useState(false);
 
   // Check authentication and redirect if needed
   const checkAuth = useCallback(() => {
@@ -192,8 +197,26 @@ export default function StudentsPage() {
   // Handle back to list
   const handleBackToList = () => {
     setSelectedStudent(null);
+    setStudentActivity(null);
+    setActivityLoading(false);
     setViewMode("list");
   };
+
+  // Fetch student activity
+  const fetchStudentActivity = useCallback(async (studentId: string) => {
+    try {
+      setActivityLoading(true);
+      const response = await apiClient.getUserActivity(studentId);
+
+      if (response.success && response.data) {
+        setStudentActivity(response.data);
+      }
+    } catch (err) {
+      console.error("Error fetching student activity:", err);
+    } finally {
+      setActivityLoading(false);
+    }
+  }, []);
 
   // Handle student actions
   const handleStudentAction = async (
@@ -201,11 +224,12 @@ export default function StudentsPage() {
     action: "activate" | "deactivate" | "verify" | "delete" | "view",
     studentName?: string,
   ) => {
-    // For view action, switch to detail view
+    // For view action, fetch student activity and switch to detail view
     if (action === "view") {
       const student = students.find((s) => s.id === studentId);
       if (student) {
         setSelectedStudent(student);
+        await fetchStudentActivity(studentId);
         setViewMode("detail");
       }
       return;
@@ -889,7 +913,97 @@ export default function StudentsPage() {
                       </AccordionSection>
 
                       <AccordionSection title="Activity">
-                        <p className="text-sm text-gray-600">Coming soon</p>
+                        {studentActivity ? (
+                          <div className="space-y-6">
+                            {/* Student Info */}
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                              <h4 className="text-sm font-medium text-gray-900 mb-2">Student Information</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                                <div><span className="font-medium">Name:</span> {studentActivity.student.name}</div>
+                                <div><span className="font-medium">Email:</span> {studentActivity.student.email}</div>
+                              </div>
+                            </div>
+
+                            {/* Activity Summary */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-4">Activity Summary</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-blue-600">{studentActivity.totals.examsAssigned}</div>
+                                  <div className="text-xs text-gray-600">Exams Assigned</div>
+                                </div>
+                                <div className="text-center p-4 bg-green-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-green-600">{studentActivity.totals.examsCompleted}</div>
+                                  <div className="text-xs text-gray-600">Exams Completed</div>
+                                </div>
+                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-yellow-600">{studentActivity.totals.quizSubmissions}</div>
+                                  <div className="text-xs text-gray-600">Quiz Submissions</div>
+                                </div>
+                                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-purple-600">{studentActivity.totals.projectsAssigned}</div>
+                                  <div className="text-xs text-gray-600">Projects Assigned</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Exams List */}
+                            {studentActivity.exams.length > 0 && (
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-900 mb-4">Assigned Exams ({studentActivity.exams.length})</h4>
+                                <div className="space-y-3">
+                                  {studentActivity.exams.slice(0, 10).map((examData) => (
+                                    <div key={examData.id} className="border rounded-lg p-4 bg-white">
+                                      <div className="flex justify-between items-start mb-2">
+                                        <h5 className="font-medium text-gray-900">{examData.exam.title}</h5>
+                                        <Badge className={examData.completed ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                                          {examData.completed ? "Completed" : "Pending"}
+                                        </Badge>
+                                      </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600 mb-2">
+                                        <div><span className="font-medium">Topic:</span> {examData.exam.topic}</div>
+                                        <div><span className="font-medium">Difficulty:</span> {examData.exam.difficulty}</div>
+                                        <div><span className="font-medium">Time Limit:</span> {examData.exam.timeLimitMinutes}min</div>
+                                      </div>
+                                      {examData.score !== null && (
+                                        <div className="text-sm">
+                                          <span className="font-medium">Score:</span> {examData.score}
+                                        </div>
+                                      )}
+                                      <div className="text-xs text-gray-500 mt-2">
+                                        Assigned: {formatDate(examData.createdAt)}
+                                      </div>
+                                    </div>
+                                  ))}
+                                  {studentActivity.exams.length > 10 && (
+                                    <div className="text-center text-sm text-gray-500">
+                                      And {studentActivity.exams.length - 10} more exams...
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Empty States */}
+                            {studentActivity.exams.length === 0 && studentActivity.quizzes.length === 0 &&
+                             studentActivity.projects.length === 0 && (
+                              <div className="text-center py-8 text-gray-500">
+                                <p>No activities found for this student.</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-8">
+                            {activityLoading ? (
+                              <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                Loading activity data...
+                              </div>
+                            ) : (
+                              <p className="text-gray-500">No activity data available.</p>
+                            )}
+                          </div>
+                        )}
                       </AccordionSection>
 
                       <AccordionSection title="Courses">

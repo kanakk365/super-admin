@@ -132,6 +132,7 @@ export default function InstitutionsPage() {
   const [studentsPage, setStudentsPage] = useState(1);
   const [studentsPageSize] = useState(20);
   const [studentsLoading, setStudentsLoading] = useState(false);
+
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "APPROVED" | "PENDING" | "REJECTED"
   >("ALL");
@@ -513,6 +514,7 @@ export default function InstitutionsPage() {
       fetchInstitutionStudents(selectedInstitution.id, newPage);
     }
   };
+
 
   // Handle institution edit
   const handleEditInstitution = async (e: React.FormEvent) => {
@@ -2051,7 +2053,7 @@ export default function InstitutionsPage() {
                         <p className="text-sm text-gray-600">Coming soon</p>
                       </AccordionSection>
 
-                      <AccordionSection title="Student details">
+                      <AccordionSection title="Student details" defaultOpen>
                         {institutionStudentsBreakdown ? (
                           <div className="space-y-6">
                             {/* Students Breakdown */}
@@ -2112,21 +2114,21 @@ export default function InstitutionsPage() {
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {institutionStudents.data.map((student) => (
-                                          <TableRow key={student.id}>
-                                            <TableCell className="text-sm">
-                                              {student.firstName} {student.lastName}
-                                            </TableCell>
+                                    {institutionStudents.data.map((student) => (
+                                      <TableRow key={student.id}>
+                                        <TableCell className="text-sm">
+                                          {student.firstName} {student.lastName}
+                                        </TableCell>
                                             <TableCell className="text-sm text-gray-600">
                                               {student.email}
                                             </TableCell>
                                             <TableCell className="text-sm text-gray-600">
                                               {student.phone}
                                             </TableCell>
-                                            <TableCell className="text-sm text-gray-600">
-                                              {formatDate(student.createdAt)}
-                                            </TableCell>
-                                          </TableRow>
+                                        <TableCell className="text-sm text-gray-600">
+                                          {formatDate(student.createdAt)}
+                                        </TableCell>
+                                      </TableRow>
                                         ))}
                                       </TableBody>
                                     </Table>
@@ -2212,6 +2214,7 @@ export default function InstitutionsPage() {
                           </div>
                         )}
                       </AccordionSection>
+
 
                       <AccordionSection title="Analytics summary">
                         {institutionSummary ? (

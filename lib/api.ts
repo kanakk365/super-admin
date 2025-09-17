@@ -11,6 +11,7 @@ export const API_CONFIG = {
       REGISTER_SUPER_INSTITUTION_ADMIN: "/super-admin/auth/super-admin/register-super-institution-admin",
     },
     USERS: "/super-admin/users",
+    USER_ACTIVITY: "/super-admin/users",
     INSTITUTIONS: "/super-admin/institution",
     INSTITUTION_UPDATE: "/super-admin/institutions",
     INSTITUTION_BY_ID: "/super-admin/institution-by-id",
@@ -39,6 +40,7 @@ import type {
   InstitutionStudentsResponse,
   InstitutionSummaryResponse,
   InstitutionStudentsBreakdownResponse,
+  StudentActivityResponse,
 } from "./types";
 
 // API Helper Functions
@@ -212,6 +214,10 @@ class ApiClient {
 
   async deleteUser(id: string): Promise<ApiResponse> {
     return this.delete<ApiResponse>(`${API_CONFIG.ENDPOINTS.USERS}/${id}`);
+  }
+
+  async getUserActivity(userId: string): Promise<ApiResponse<StudentActivityResponse>> {
+    return this.get<ApiResponse<StudentActivityResponse>>(`${API_CONFIG.ENDPOINTS.USER_ACTIVITY}/${userId}/activity`);
   }
 
   // Institution-specific methods

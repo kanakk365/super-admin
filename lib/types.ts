@@ -149,6 +149,59 @@ export interface InstitutionStudentsBreakdownResponse {
   }[];
 }
 
+// Student Activity Types
+export interface StudentActivityResponse {
+  student: {
+    id: string;
+    name: string;
+    email: string;
+    standardId: string;
+    sectionId: string;
+    institutionId: string;
+  };
+  totals: {
+    examsAssigned: number;
+    examsCompleted: number;
+    quizSubmissions: number;
+    projectsAssigned: number;
+    projectsCompleted: number;
+    personalizedTopics: number;
+    dailyChallenges: number;
+  };
+  exams: {
+    id: string;
+    studentId: string;
+    examId: string;
+    completed: boolean;
+    score: number | null;
+    startTime: string | null;
+    endTime: string | null;
+    createdAt: string;
+    updatedAt: string;
+    exam: {
+      id: string;
+      title: string;
+      instructions: string;
+      timeLimitMinutes: number;
+      topic: string;
+      difficulty: "EASY" | "MEDIUM" | "HARD";
+      createdAt: string;
+      teacherId: string;
+      institutionId: string;
+      userId: string | null;
+      type: string;
+      isActive: boolean;
+      createdBy: string;
+      standardId: string | null;
+      sectionId: string | null;
+    };
+  }[];
+  quizzes: unknown[];
+  projects: unknown[];
+  personalizedLearning: unknown[];
+  dailyChallenges: unknown[];
+}
+
 export interface Address {
   street: string;
   city: string;

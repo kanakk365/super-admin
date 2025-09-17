@@ -81,14 +81,72 @@ export interface Activity {
 export interface Institution {
   id: string;
   name: string;
-  type: "university" | "college" | "school" | "training_center";
-  status: "active" | "pending" | "inactive";
-  address: Address;
-  contactInfo: ContactInfo;
-  studentCount: number;
-  establishedDate: string;
+  type: string;
+  pocName: string | null;
+  affiliatedBoard: string;
+  email: string;
+  password: string;
+  phone: string;
+  website: string;
+  yearOfEstablishment: string;
+  totalStudentStrength: number;
+  proofOfInstitutionUrl: string;
+  logoUrl: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+  address: string;
+  approvalStatus: "APPROVED" | "PENDING" | "REJECTED";
+  isSuspended: boolean;
   createdAt: string;
   updatedAt: string;
+  addedById: string;
+}
+
+// Institution Detail API Response Types
+export interface InstitutionStudent {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  standardId: string;
+  sectionId: string;
+  createdAt: string;
+}
+
+export interface InstitutionStudentsResponse {
+  data: InstitutionStudent[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface InstitutionSummaryResponse {
+  totals: {
+    students: number;
+    quizzes: number;
+    quizSubmissions: number;
+    exams: number;
+    completedExams: number;
+    projects: number;
+    completedProjects: number;
+  };
+}
+
+export interface InstitutionStudentsBreakdownResponse {
+  byClass: {
+    standardId: string;
+    standardName: string;
+    count: number;
+  }[];
+  bySection: {
+    sectionId: string;
+    sectionName: string;
+    count: number;
+  }[];
 }
 
 export interface Address {

@@ -12,6 +12,11 @@ export const API_CONFIG = {
     },
     USERS: "/super-admin/users",
     INSTITUTIONS: "/super-admin/institution",
+    INSTITUTION_UPDATE: "/super-admin/institutions",
+    INSTITUTION_BY_ID: "/super-admin/institution-by-id",
+    INSTITUTION_STUDENTS: "/super-admin/institutions",
+    INSTITUTION_SUMMARY: "/super-admin/institutions",
+    INSTITUTION_STUDENTS_BREAKDOWN: "/super-admin/institutions",
     BLOGS: "/super-admin/blogs",
     ROLES: "/super-admin/roles",
     HEALTH: "/super-admin/health",
@@ -30,6 +35,10 @@ import type {
   AuthResponse,
   ApiError,
   HealthCheckResponse,
+  Institution,
+  InstitutionStudentsResponse,
+  InstitutionSummaryResponse,
+  InstitutionStudentsBreakdownResponse,
 } from "./types";
 
 // API Helper Functions
@@ -203,6 +212,27 @@ class ApiClient {
 
   async deleteUser(id: string): Promise<ApiResponse> {
     return this.delete<ApiResponse>(`${API_CONFIG.ENDPOINTS.USERS}/${id}`);
+  }
+
+  // Institution-specific methods
+  async getInstitutionById(id: string): Promise<ApiResponse<Institution>> {
+    return this.get<ApiResponse<Institution>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_BY_ID}?id=${id}`);
+  }
+
+  async getInstitutionStudents(institutionId: string, page: number = 1, limit: number = 20): Promise<ApiResponse<InstitutionStudentsResponse>> {
+    return this.get<ApiResponse<InstitutionStudentsResponse>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_STUDENTS}/${institutionId}/students?page=${page}&limit=${limit}`);
+  }
+
+  async getInstitutionSummary(institutionId: string): Promise<ApiResponse<InstitutionSummaryResponse>> {
+    return this.get<ApiResponse<InstitutionSummaryResponse>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_SUMMARY}/${institutionId}/summary`);
+  }
+
+  async getInstitutionStudentsBreakdown(institutionId: string): Promise<ApiResponse<InstitutionStudentsBreakdownResponse>> {
+    return this.get<ApiResponse<InstitutionStudentsBreakdownResponse>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_STUDENTS_BREAKDOWN}/${institutionId}/students-breakdown`);
+  }
+
+  async updateInstitution(institutionId: string, data: Partial<Institution>): Promise<ApiResponse<Institution>> {
+    return this.put<ApiResponse<Institution>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_UPDATE}/${institutionId}`, data);
   }
 }
 

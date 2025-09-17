@@ -41,14 +41,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { handleApiError } from "@/lib/api";
+import { handleApiError, apiClient } from "@/lib/api";
+import type {
+  InstitutionStudentsResponse,
+  InstitutionSummaryResponse,
+  InstitutionStudentsBreakdownResponse,
+} from "@/lib/types";
 
 interface Institution {
   id: string;
   name: string;
   type: string;
+  pocName: string | null;
   affiliatedBoard: string;
   email: string;
+  password: string;
   phone: string;
   website: string;
   yearOfEstablishment: string;
@@ -59,6 +66,7 @@ interface Institution {
   secondaryColor: string | null;
   address: string;
   approvalStatus: "APPROVED" | "PENDING" | "REJECTED";
+  isSuspended: boolean;
   createdAt: string;
   updatedAt: string;
   addedById: string;
@@ -113,7 +121,17 @@ export default function InstitutionsPage() {
   const [createLoading, setCreateLoading] = useState(false);
   const [selectedInstitution, setSelectedInstitution] =
     useState<Institution | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
+  const [viewMode, setViewMode] = useState<"list" | "detail" | "edit">("list");
+
+  // Institution detail data
+  const [institutionStudents, setInstitutionStudents] = useState<InstitutionStudentsResponse | null>(null);
+  const [institutionSummary, setInstitutionSummary] = useState<InstitutionSummaryResponse | null>(null);
+  const [institutionStudentsBreakdown, setInstitutionStudentsBreakdown] = useState<InstitutionStudentsBreakdownResponse | null>(null);
+
+  // Students pagination state
+  const [studentsPage, setStudentsPage] = useState(1);
+  const [studentsPageSize] = useState(20);
+  const [studentsLoading, setStudentsLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "APPROVED" | "PENDING" | "REJECTED"
   >("ALL");
@@ -384,22 +402,191 @@ export default function InstitutionsPage() {
   // Handle institution actions
   const handleInstitutionAction = async (
     institutionId: string,
-    action: "view"
+    action: "view" | "edit"
   ) => {
     switch (action) {
       case "view":
-        const institution = institutions.find((i) => i.id === institutionId);
-        if (institution) {
-          setSelectedInstitution(institution);
-          setViewMode("detail");
+        try {
+          setLoading(true);
+          setError("");
+
+          // Fetch institution details
+          const institutionResponse = await apiClient.getInstitutionById(institutionId);
+
+          if (institutionResponse.success && institutionResponse.data) {
+            setSelectedInstitution(institutionResponse.data);
+
+            // Fetch additional institution data in parallel (excluding students)
+            const [summaryResponse, breakdownResponse] = await Promise.allSettled([
+              apiClient.getInstitutionSummary(institutionId),
+              apiClient.getInstitutionStudentsBreakdown(institutionId),
+            ]);
+
+            // Handle summary data
+            if (summaryResponse.status === "fulfilled" && summaryResponse.value.success && summaryResponse.value.data) {
+              setInstitutionSummary(summaryResponse.value.data!);
+            }
+
+            // Handle breakdown data
+            if (breakdownResponse.status === "fulfilled" && breakdownResponse.value.success && breakdownResponse.value.data) {
+              setInstitutionStudentsBreakdown(breakdownResponse.value.data!);
+            }
+
+            // Fetch initial students data
+            await fetchInstitutionStudents(institutionId, 1);
+
+            setViewMode("detail");
+          } else {
+            setError(institutionResponse.message || "Failed to fetch institution details");
+          }
+        } catch (err) {
+          console.error("Error fetching institution details:", err);
+          setError(handleApiError(err));
+        } finally {
+          setLoading(false);
         }
         break;
+
+      case "edit":
+        try {
+          setLoading(true);
+          setError("");
+
+          // Fetch institution details for editing
+          const institutionResponse = await apiClient.getInstitutionById(institutionId);
+
+          if (institutionResponse.success && institutionResponse.data) {
+            setSelectedInstitution(institutionResponse.data);
+
+            // Pre-populate form with institution data
+            setFormData({
+              name: institutionResponse.data.name,
+              type: institutionResponse.data.type,
+              affiliatedBoard: institutionResponse.data.affiliatedBoard,
+              email: institutionResponse.data.email,
+              phone: institutionResponse.data.phone,
+              website: institutionResponse.data.website || "",
+              yearOfEstablishment: institutionResponse.data.yearOfEstablishment,
+              totalStudentStrength: institutionResponse.data.totalStudentStrength.toString(),
+              address: institutionResponse.data.address,
+              proofOfInstitution: null,
+              logo: null,
+              primaryColor: institutionResponse.data.primaryColor || "#ffffff",
+              secondaryColor: institutionResponse.data.secondaryColor || "#ffffff",
+              password: "", // Don't pre-populate password for security
+            });
+
+            setViewMode("edit");
+          } else {
+            setError(institutionResponse.message || "Failed to fetch institution details");
+          }
+        } catch (err) {
+          console.error("Error fetching institution details for edit:", err);
+          setError(handleApiError(err));
+        } finally {
+          setLoading(false);
+        }
+        break;
+    }
+  };
+
+  // Fetch students with pagination
+  const fetchInstitutionStudents = useCallback(async (institutionId: string, page: number = 1) => {
+    try {
+      setStudentsLoading(true);
+      const response = await apiClient.getInstitutionStudents(institutionId, page, studentsPageSize);
+
+      if (response.success && response.data) {
+        setInstitutionStudents(response.data);
+        setStudentsPage(page);
+      }
+    } catch (err) {
+      console.error("Error fetching institution students:", err);
+    } finally {
+      setStudentsLoading(false);
+    }
+  }, [studentsPageSize]);
+
+  // Handle students page change
+  const handleStudentsPageChange = (newPage: number) => {
+    if (selectedInstitution) {
+      fetchInstitutionStudents(selectedInstitution.id, newPage);
+    }
+  };
+
+  // Handle institution edit
+  const handleEditInstitution = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!selectedInstitution) return;
+
+    if (!formData.name || !formData.email || !formData.phone) {
+      setError("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setCreateLoading(true);
+      setError("");
+
+      const updateData = {
+        name: formData.name,
+        type: formData.type,
+        affiliatedBoard: formData.affiliatedBoard,
+        email: formData.email,
+        phone: formData.phone,
+        website: formData.website,
+        yearOfEstablishment: formData.yearOfEstablishment,
+        totalStudentStrength: parseInt(formData.totalStudentStrength),
+        address: formData.address,
+        primaryColor: formData.primaryColor,
+        secondaryColor: formData.secondaryColor,
+      };
+
+      const response = await apiClient.updateInstitution(selectedInstitution.id, updateData);
+
+      if (response.success) {
+        // Refresh institutions list
+        await fetchInstitutions();
+
+        // Reset form and go back to list
+        setFormData({
+          name: "",
+          type: "",
+          affiliatedBoard: "",
+          email: "",
+          phone: "",
+          website: "",
+          yearOfEstablishment: "",
+          totalStudentStrength: "",
+          address: "",
+          proofOfInstitution: null,
+          logo: null,
+          primaryColor: "#ffffff",
+          secondaryColor: "#ffffff",
+          password: "",
+        });
+        setSelectedInstitution(null);
+        setViewMode("list");
+      } else {
+        setError(response.message || "Failed to update institution");
+      }
+    } catch (err) {
+      console.error("Error updating institution:", err);
+      setError(handleApiError(err));
+    } finally {
+      setCreateLoading(false);
     }
   };
 
   // Handle back to list
   const handleBackToList = () => {
     setSelectedInstitution(null);
+    setInstitutionStudents(null);
+    setInstitutionSummary(null);
+    setInstitutionStudentsBreakdown(null);
+    setStudentsPage(1);
+    setStudentsLoading(false);
     setViewMode("list");
   };
 
@@ -432,6 +619,17 @@ export default function InstitutionsPage() {
               <div>
                 <h1 className="text-2xl text-neutral-700 font-semibold tracking-tight">
                   Institution Details
+                </h1>
+              </div>
+            </div>
+          ) : viewMode === "edit" ? (
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" onClick={handleBackToList}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+              </Button>
+              <div>
+                <h1 className="text-2xl text-neutral-700 font-semibold tracking-tight">
+                  Edit Institution
                 </h1>
               </div>
             </div>
@@ -526,6 +724,377 @@ export default function InstitutionsPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Institution Form */}
+      {viewMode === "edit" && (
+        <Card className="max-w-7xl mx-auto">
+          <CardHeader className="text-left pb-6">
+            <CardTitle className="text-xl font-semibold text-gray-900">
+              Edit Institution Details
+            </CardTitle>
+            <div className="w-full h-px bg-gray-200 mt-4"></div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleEditInstitution} className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  {/* Institution name */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-name"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Institution name
+                    </Label>
+                    <Input
+                      id="edit-name"
+                      placeholder="Name of the Institute"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Affiliated Board/University */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-affiliatedBoard"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Affiliated Board/University
+                    </Label>
+                    <Input
+                      id="edit-affiliatedBoard"
+                      placeholder="Enter affiliated board"
+                      value={formData.affiliatedBoard}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          affiliatedBoard: e.target.value,
+                        }))
+                      }
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Official Phone Number / Landline */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-phone"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Official Phone Number / Landline
+                    </Label>
+                    <Input
+                      id="edit-phone"
+                      placeholder="Type contact no."
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Institution Address */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-address"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Institution Address
+                    </Label>
+                    <Textarea
+                      id="edit-address"
+                      placeholder="Type address info"
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400 resize-y overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                        minHeight: "44px",
+                      }}
+                      value={formData.address}
+                      onChange={(e) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          address: e.target.value,
+                        }));
+                        // Auto-resize functionality
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = target.scrollHeight + "px";
+                      }}
+                      onInput={(e) => {
+                        const target = e.target as HTMLTextAreaElement;
+                        target.style.height = "auto";
+                        target.style.height = target.scrollHeight + "px";
+                      }}
+                    />
+                  </div>
+
+                  {/* Official Email Address */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-email"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Official Email Address
+                    </Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      placeholder="Enter Email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {/* Type of Institution */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-type"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Type of Institution
+                    </Label>
+                    <Input
+                      id="edit-type"
+                      placeholder="e.g., University, College, School"
+                      value={formData.type}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          type: e.target.value,
+                        }))
+                      }
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Year of Establishment (optional) */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-yearOfEstablishment"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Year of Establishment (optional)
+                    </Label>
+                    <Input
+                      id="edit-yearOfEstablishment"
+                      placeholder="Enter year of establishment"
+                      value={formData.yearOfEstablishment}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          yearOfEstablishment: e.target.value,
+                        }))
+                      }
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Website URL (optional) */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-website"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Website URL (optional)
+                    </Label>
+                    <Input
+                      id="edit-website"
+                      placeholder="Enter website url"
+                      value={formData.website}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          website: e.target.value,
+                        }))
+                      }
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+
+                  {/* Total Student Strength (optional) */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="edit-totalStudentStrength"
+                      className="text-sm font-medium text-gray-700"
+                    >
+                      Total Student Strength (optional)
+                    </Label>
+                    <Input
+                      id="edit-totalStudentStrength"
+                      placeholder="Enter student strength"
+                      value={formData.totalStudentStrength}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          totalStudentStrength: e.target.value,
+                        }))
+                      }
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background:
+                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Additional Fields for Backend Compatibility */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-primaryColor"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Primary Color
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="edit-primaryColor"
+                      type="color"
+                      value={formData.primaryColor}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          primaryColor: e.target.value,
+                        }))
+                      }
+                      className="w-16 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
+                    />
+                    <Input
+                      value={formData.primaryColor}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          primaryColor: e.target.value,
+                        }))
+                      }
+                      className="flex-1 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-secondaryColor"
+                    className="text-sm font-medium text-gray-700"
+                  >
+                    Secondary Color
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="edit-secondaryColor"
+                      type="color"
+                      value={formData.secondaryColor}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          secondaryColor: e.target.value,
+                        }))
+                      }
+                      className="w-16 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
+                    />
+                    <Input
+                      value={formData.secondaryColor}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          secondaryColor: e.target.value,
+                        }))
+                      }
+                      className="flex-1 h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md border border-red-200">
+                  {error}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-4 pt-6 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleBackToList}
+                  className="h-10 bg-red-600 text-white border-red-600 hover:bg-red-700 hover:border-red-700"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createLoading}
+                  className="h-10 bg-orange-600 text-white border-orange-600 hover:bg-orange-700 hover:border-orange-700"
+                >
+                  {createLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    "Update institution"
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Create Institution Form */}
       {showCreateForm && (
@@ -980,7 +1549,7 @@ export default function InstitutionsPage() {
       )}
 
       {/* Institutions List or Detail View */}
-      {!showCreateForm && (
+      {!showCreateForm && viewMode !== "edit" && (
         <>
           {viewMode === "list" ? (
             <Card className="py-0">
@@ -1328,17 +1897,13 @@ export default function InstitutionsPage() {
                           </div> */}
                         </div>
                       </div>
-                      <Badge
-                        className={`text-sm ${
-                          selectedInstitution.approvalStatus === "APPROVED"
-                            ? "bg-transparent text-orange-600 border border-orange-400"
-                            : selectedInstitution.approvalStatus === "PENDING"
-                            ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
-                            : "bg-red-100 text-red-800 border border-red-400"
-                        }`}
+                      <Button
+                        size="sm"
+                        onClick={() => handleInstitutionAction(selectedInstitution.id, "edit")}
+                        className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
                       >
-                        {selectedInstitution.approvalStatus}
-                      </Badge>
+                        Edit
+                      </Button>
                     </div>
 
                     {/* Accordion sections */}
@@ -1383,6 +1948,17 @@ export default function InstitutionsPage() {
                                 </div>
                               </div>
                             )}
+                            {selectedInstitution.pocName && (
+                              <div className="flex items-center gap-3">
+                                <Users className="h-5 w-5 text-gray-400" />
+                                <div>
+                                  <p className="text-sm text-gray-600">POC Name</p>
+                                  <p className="font-medium">
+                                    {selectedInstitution.pocName}
+                                  </p>
+                                </div>
+                              </div>
+                            )}
                             {selectedInstitution.address && (
                               <div className="flex items-start gap-3">
                                 <MapPin className="h-5 w-5 text-gray-400 mt-1" />
@@ -1393,6 +1969,23 @@ export default function InstitutionsPage() {
                                   <p className="font-medium">
                                     {selectedInstitution.address}
                                   </p>
+                                </div>
+                              </div>
+                            )}
+                            {selectedInstitution.proofOfInstitutionUrl && (
+                              <div className="flex items-center gap-3">
+                                <ExternalLink className="h-5 w-5 text-gray-400" />
+                                <div>
+                                  <p className="text-sm text-gray-600">Proof of Institution</p>
+                                  <a
+                                    href={selectedInstitution.proofOfInstitutionUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                  >
+                                    View Document
+                                    <ExternalLink className="h-3 w-3" />
+                                  </a>
                                 </div>
                               </div>
                             )}
@@ -1434,6 +2027,18 @@ export default function InstitutionsPage() {
                                 {selectedInstitution.approvalStatus}
                               </Badge>
                             </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">Suspended</span>
+                              <Badge
+                                className={`${
+                                  selectedInstitution.isSuspended
+                                    ? "bg-red-100 text-red-800 border border-red-400"
+                                    : "bg-green-100 text-green-800 border border-green-400"
+                                }`}
+                              >
+                                {selectedInstitution.isSuspended ? "Yes" : "No"}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </AccordionSection>
@@ -1447,14 +2052,249 @@ export default function InstitutionsPage() {
                       </AccordionSection>
 
                       <AccordionSection title="Student details">
-                        <p className="text-sm text-gray-600">Coming soon</p>
+                        {institutionStudentsBreakdown ? (
+                          <div className="space-y-6">
+                            {/* Students Breakdown */}
+                            <div className="space-y-4">
+                              <h4 className="text-sm font-medium text-gray-900">Students Breakdown</h4>
+
+                              {/* By Class */}
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-700 mb-2">By Class</h5>
+                                <div className="grid gap-2">
+                                  {institutionStudentsBreakdown.byClass.map((classItem) => (
+                                    <div key={classItem.standardId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                      <span className="text-sm text-gray-900">{classItem.standardName}</span>
+                                      <Badge variant="secondary">{classItem.count} students</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* By Section */}
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-700 mb-2">By Section</h5>
+                                <div className="grid gap-2">
+                                  {institutionStudentsBreakdown.bySection.map((sectionItem) => (
+                                    <div key={sectionItem.sectionId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                      <span className="text-sm text-gray-900">{sectionItem.sectionName}</span>
+                                      <Badge variant="secondary">{sectionItem.count} students</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Students List */}
+                            <div className="space-y-4">
+                              <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-medium text-gray-900">
+                                  Students {institutionStudents ? `(${institutionStudents.meta.total})` : ''}
+                                </h4>
+                                {studentsLoading && (
+                                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                                    Loading...
+                                  </div>
+                                )}
+                              </div>
+
+                              {institutionStudents ? (
+                                <>
+                                  <div className="border rounded-lg overflow-hidden">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow className="bg-gray-50">
+                                          <TableHead className="text-xs">Name</TableHead>
+                                          <TableHead className="text-xs">Email</TableHead>
+                                          <TableHead className="text-xs">Phone</TableHead>
+                                          <TableHead className="text-xs">Joined</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {institutionStudents.data.map((student) => (
+                                          <TableRow key={student.id}>
+                                            <TableCell className="text-sm">
+                                              {student.firstName} {student.lastName}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-gray-600">
+                                              {student.email}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-gray-600">
+                                              {student.phone}
+                                            </TableCell>
+                                            <TableCell className="text-sm text-gray-600">
+                                              {formatDate(student.createdAt)}
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+
+                                  {/* Pagination Controls */}
+                                  {institutionStudents.meta.totalPages > 1 && (
+                                    <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
+                                      {/* Pagination Info */}
+                                      <div className="text-xs text-gray-500 text-center">
+                                        Showing {((institutionStudents.meta.page - 1) * institutionStudents.meta.limit) + 1} to {Math.min(institutionStudents.meta.page * institutionStudents.meta.limit, institutionStudents.meta.total)} of {institutionStudents.meta.total} students
+                                      </div>
+
+                                      {/* Page Navigation */}
+                                      <div className="flex items-center justify-center gap-2">
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleStudentsPageChange(studentsPage - 1)}
+                                          disabled={studentsPage === 1 || studentsLoading}
+                                          className="h-8"
+                                        >
+                                          <ChevronLeft className="h-4 w-4" />
+                                          Previous
+                                        </Button>
+
+                                        <div className="flex items-center gap-1">
+                                          {/* Show page numbers - limited to 5 pages max */}
+                                          {Array.from(
+                                            { length: Math.min(5, institutionStudents.meta.totalPages) },
+                                            (_, i) => {
+                                              let pageNumber;
+                                              if (institutionStudents.meta.totalPages <= 5) {
+                                                pageNumber = i + 1;
+                                              } else if (studentsPage <= 3) {
+                                                pageNumber = i + 1;
+                                              } else if (studentsPage >= institutionStudents.meta.totalPages - 2) {
+                                                pageNumber = institutionStudents.meta.totalPages - 4 + i;
+                                              } else {
+                                                pageNumber = studentsPage - 2 + i;
+                                              }
+
+                                              return (
+                                                <Button
+                                                  key={pageNumber}
+                                                  variant={studentsPage === pageNumber ? "default" : "outline"}
+                                                  size="sm"
+                                                  onClick={() => handleStudentsPageChange(pageNumber)}
+                                                  disabled={studentsLoading}
+                                                  className={`h-8 w-8 p-0 ${studentsPage === pageNumber ? "bg-brand-gradient text-white" : ""}`}
+                                                >
+                                                  {pageNumber}
+                                                </Button>
+                                              );
+                                            }
+                                          )}
+                                        </div>
+
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => handleStudentsPageChange(studentsPage + 1)}
+                                          disabled={studentsPage === institutionStudents.meta.totalPages || studentsLoading}
+                                          className="h-8"
+                                        >
+                                          Next
+                                          <ChevronRight className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <div className="flex items-center justify-center py-8">
+                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        )}
                       </AccordionSection>
 
                       <AccordionSection title="Analytics summary">
-                        <div className="grid md:grid-cols-2 gap-4 text-sm">
+                        {institutionSummary ? (
+                          <div className="space-y-6">
+                            {/* Institution Metrics */}
                           <div>
-                            <div className="text-gray-600 mb-1">Created</div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-4">Institution Statistics</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-blue-600">{institutionSummary.totals.students}</div>
+                                  <div className="text-xs text-gray-600">Total Students</div>
+                                </div>
+                                <div className="text-center p-4 bg-green-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-green-600">{institutionSummary.totals.quizzes}</div>
+                                  <div className="text-xs text-gray-600">Total Quizzes</div>
+                                </div>
+                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-yellow-600">{institutionSummary.totals.exams}</div>
+                                  <div className="text-xs text-gray-600">Total Exams</div>
+                                </div>
+                                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-purple-600">{institutionSummary.totals.projects}</div>
+                                  <div className="text-xs text-gray-600">Total Projects</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Completion Rates */}
                             <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-4">Completion Rates</h4>
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-4 bg-gray-50 rounded-lg">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm text-gray-600">Quiz Submissions</span>
+                                    <span className="text-sm font-medium">{institutionSummary.totals.quizSubmissions}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-green-500 h-2 rounded-full"
+                                      style={{
+                                        width: `${institutionSummary.totals.quizzes > 0 ? (institutionSummary.totals.quizSubmissions / institutionSummary.totals.quizzes) * 100 : 0}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                <div className="p-4 bg-gray-50 rounded-lg">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm text-gray-600">Completed Exams</span>
+                                    <span className="text-sm font-medium">{institutionSummary.totals.completedExams}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-blue-500 h-2 rounded-full"
+                                      style={{
+                                        width: `${institutionSummary.totals.exams > 0 ? (institutionSummary.totals.completedExams / institutionSummary.totals.exams) * 100 : 0}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+
+                                <div className="p-4 bg-gray-50 rounded-lg">
+                                  <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm text-gray-600">Completed Projects</span>
+                                    <span className="text-sm font-medium">{institutionSummary.totals.completedProjects}</span>
+                                  </div>
+                                  <div className="w-full bg-gray-200 rounded-full h-2">
+                                    <div
+                                      className="bg-orange-500 h-2 rounded-full"
+                                      style={{
+                                        width: `${institutionSummary.totals.projects > 0 ? (institutionSummary.totals.completedProjects / institutionSummary.totals.projects) * 100 : 0}%`
+                                      }}
+                                    ></div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Institution Timeline */}
+                            <div className="grid md:grid-cols-2 gap-4 text-sm border-t pt-4">
+                              <div>
+                                <div className="text-gray-600 mb-1">Created</div>
+                                <div className="font-medium">
                               {formatDate(selectedInstitution.createdAt)}
                             </div>
                           </div>
@@ -1462,16 +2302,22 @@ export default function InstitutionsPage() {
                             <div className="text-gray-600 mb-1">
                               Last Updated
                             </div>
-                            <div>
+                                <div className="font-medium">
                               {formatDate(selectedInstitution.updatedAt)}
                             </div>
                           </div>
                         </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        )}
                       </AccordionSection>
                     </div>
 
                     {/* Actions */}
-                    <div className="flex justify-end gap-4 pt-6 border-t">
+                    <div className="flex justify-end pt-6 border-t">
                       <Button variant="outline" onClick={handleBackToList}>
                         <ArrowLeft className="mr-2 h-4 w-4" />
                         Back to List

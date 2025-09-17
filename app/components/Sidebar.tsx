@@ -64,21 +64,16 @@ const getIcon = (iconName: string, isActive: boolean, className: string) => {
 const navigation = [
   { name: "Dashboard", href: "/dashboard", iconName: "dashboard" },
   {
-    name: "Institutions",
-    href: "/dashboard/institutions",
-    iconName: "institutions",
-  },
-  { name: "Students", href: "/dashboard/students", iconName: "students" },
-  {
     name: "Super Institution",
     href: "/dashboard/super-institution-admin",
     iconName: "institutions",
   },
   {
-    name: "Assign Features",
-    href: "/dashboard/assignfeatures",
-    iconName: "assign-features",
+    name: "Institutions",
+    href: "/dashboard/institutions",
+    iconName: "institutions",
   },
+  { name: "Students", href: "/dashboard/students", iconName: "students" },
   { name: "Blogs", href: "/dashboard/blogs", iconName: "blogs" },
   { name: "Roles", href: "/dashboard/roles", iconName: "roles" },
 ];

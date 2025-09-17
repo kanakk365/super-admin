@@ -18,6 +18,7 @@ export const API_CONFIG = {
     INSTITUTION_STUDENTS: "/super-admin/institutions",
     INSTITUTION_SUMMARY: "/super-admin/institutions",
     INSTITUTION_STUDENTS_BREAKDOWN: "/super-admin/institutions",
+    INSTITUTION_STATS: "/super-admin/institutions",
     BLOGS: "/super-admin/blogs",
     ROLES: "/super-admin/roles",
     HEALTH: "/super-admin/health",
@@ -37,10 +38,15 @@ import type {
   ApiError,
   HealthCheckResponse,
   Institution,
+  InstitutionListResponse,
   InstitutionStudentsResponse,
   InstitutionSummaryResponse,
   InstitutionStudentsBreakdownResponse,
+  InstitutionStatsResponse,
   StudentActivityResponse,
+  Member,
+  Feature,
+  InstitutionFeatureAssignment,
 } from "./types";
 
 // API Helper Functions
@@ -237,8 +243,52 @@ class ApiClient {
     return this.get<ApiResponse<InstitutionStudentsBreakdownResponse>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_STUDENTS_BREAKDOWN}/${institutionId}/students-breakdown`);
   }
 
+  async getInstitutionStats(institutionId: string): Promise<ApiResponse<InstitutionStatsResponse>> {
+    return this.get<ApiResponse<InstitutionStatsResponse>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_STATS}/${institutionId}/stats`);
+  }
+
   async updateInstitution(institutionId: string, data: Partial<Institution>): Promise<ApiResponse<Institution>> {
     return this.put<ApiResponse<Institution>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_UPDATE}/${institutionId}`, data);
+  }
+
+  async getSuperInstitutionAdminsInstitutions(page: number = 1, limit: number = 10): Promise<ApiResponse<InstitutionListResponse>> {
+    return this.get<ApiResponse<InstitutionListResponse>>(`/super-admin/institutions/my?page=${page}&limit=${limit}`);
+  }
+
+  async getInstitutionFeatures(institutionId: string): Promise<ApiResponse<InstitutionFeatureAssignment[]>> {
+    return this.get<ApiResponse<InstitutionFeatureAssignment[]>>(`/super-admin/institutions/${institutionId}/features`);
+  }
+
+  async getAllInstitutions(page: number = 1, limit: number = 100): Promise<ApiResponse<InstitutionListResponse>> {
+    return this.get<ApiResponse<InstitutionListResponse>>(`${API_CONFIG.ENDPOINTS.INSTITUTIONS}?page=${page}&limit=${limit}`);
+  }
+
+  async assignInstitutionFeatures(data: {
+    institutionId: string;
+    features: Array<{ key: string; enabled: boolean }>;
+  }): Promise<ApiResponse<{ message: string }>> {
+    return this.post<ApiResponse<{ message: string }>>('/super-admin/institutions/assign-features', data);
+  }
+
+  // Roles API methods
+  async getRolesUnderAdmin(): Promise<ApiResponse<Member[]>> {
+    return this.get<ApiResponse<Member[]>>(`/super-admin/role-under-admin`);
+  }
+
+  async createRoleUnderAdmin(memberData: {
+    email: string;
+    firstName: string;
+    lastName?: string;
+    phone?: string;
+    roleName: string;
+    password: string;
+  }): Promise<ApiResponse<Member>> {
+    return this.post<ApiResponse<Member>>(`/super-admin/role-under-admin`, memberData);
+  }
+
+  // Features API methods
+  async getFeatures(): Promise<ApiResponse<Feature[]>> {
+    return this.get<ApiResponse<Feature[]>>(`/super-admin/features`);
   }
 }
 
@@ -262,4 +312,5 @@ export type {
   AuthResponse,
   ApiError,
   HealthCheckResponse,
+  Member,
 };

@@ -5,22 +5,20 @@ import {
   Search,
   Plus,
   X,
-  Eye,
-  Edit,
-  Trash2,
   Shield,
-  Users,
-  Key,
   UserCheck,
   ArrowLeft,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Mail,
+  Phone,
 } from "lucide-react";
+import { handleApiError, apiClient } from "@/lib/api";
+import type { Member } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -41,239 +39,120 @@ import {
 // import { Checkbox } from "@/components/ui/checkbox";
 
 // Types
-interface Role {
+
+interface MembersApiResponse {
   id: string;
-  name: string;
-  description: string;
-  userCount: number;
-  permissions: string[];
-  status: "ACTIVE" | "INACTIVE";
+  email: string;
+  firstName: string;
+  lastName: string;
+  roleName: string;
+  phone: string;
+  adminId: string;
   createdAt: string;
   updatedAt: string;
 }
 
-interface RoleFormData {
-  name: string;
-  description: string;
-  permissions: string[];
-  status: "ACTIVE" | "INACTIVE";
+interface MemberFormData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  roleName: string;
+  password: string;
 }
 
-interface RoleStats {
+interface MemberStats {
   total: number;
-  active: number;
-  inactive: number;
-  totalUsers: number;
+  uniqueRoles: number;
+  totalMembers: number;
 }
 
-// Available permissions
-const availablePermissions = [
-  {
-    id: "read",
-    name: "Read Access",
-    description: "View system data and reports",
-    category: "Basic",
-  },
-  {
-    id: "write",
-    name: "Write Access",
-    description: "Create and edit content",
-    category: "Basic",
-  },
-  {
-    id: "delete",
-    name: "Delete Access",
-    description: "Remove data from system",
-    category: "Basic",
-  },
-  {
-    id: "manage_users",
-    name: "Manage Users",
-    description: "Add, edit, and remove users",
-    category: "User Management",
-  },
-  {
-    id: "manage_institutions",
-    name: "Manage Institutions",
-    description: "Control institution settings",
-    category: "Institution Management",
-  },
-  {
-    id: "manage_students",
-    name: "Manage Students",
-    description: "Handle student data and enrollment",
-    category: "Student Management",
-  },
-  {
-    id: "manage_blogs",
-    name: "Manage Blogs",
-    description: "Create and publish blog content",
-    category: "Content Management",
-  },
-  {
-    id: "view_reports",
-    name: "View Reports",
-    description: "Access analytics and reports",
-    category: "Analytics",
-  },
-  {
-    id: "system_config",
-    name: "System Configuration",
-    description: "Modify system settings",
-    category: "System",
-  },
-  {
-    id: "publish_content",
-    name: "Publish Content",
-    description: "Approve and publish content",
-    category: "Content Management",
-  },
-  {
-    id: "view_students",
-    name: "View Students",
-    description: "View student information",
-    category: "Student Management",
-  },
-  {
-    id: "send_messages",
-    name: "Send Messages",
-    description: "Communicate with users",
-    category: "Communication",
-  },
-];
 
-// Helper function for API error handling
-const handleApiError = (error: unknown): string => {
-  if (error instanceof Error) {
-    return error.message;
-  }
-  return "An unexpected error occurred";
-};
 
 export default function RolesPage() {
-  const [roles, setRoles] = useState<Role[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
-  const [statusFilter, setStatusFilter] = useState<
-    "ALL" | "ACTIVE" | "INACTIVE"
-  >("ALL");
-  const [stats, setStats] = useState<RoleStats>({
+  const [stats, setStats] = useState<MemberStats>({
     total: 0,
-    active: 0,
-    inactive: 0,
-    totalUsers: 0,
+    uniqueRoles: 0,
+    totalMembers: 0,
   });
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const [formData, setFormData] = useState<RoleFormData>({
-    name: "",
-    description: "",
-    permissions: [],
-    status: "ACTIVE",
+  const [formData, setFormData] = useState<MemberFormData>({
+    email: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    roleName: "",
+    password: "",
   });
 
-  // Initialize with default roles
-  useEffect(() => {
-    const defaultRoles: Role[] = [
-      {
-        id: "1",
-        name: "Super Admin",
-        description: "Full system access with all permissions",
-        userCount: 2,
-        permissions: [
-          "read",
-          "write",
-          "delete",
-          "manage_users",
-          "manage_institutions",
-          "manage_blogs",
-          "system_config",
-          "view_reports",
-          "publish_content",
-          "manage_students",
-          "view_students",
-          "send_messages",
-        ],
-        status: "ACTIVE",
-        createdAt: "2023-01-01T00:00:00Z",
-        updatedAt: "2023-01-01T00:00:00Z",
-      },
-      {
-        id: "2",
-        name: "Admin",
-        description: "Administrative access to manage institutions and users",
-        userCount: 8,
-        permissions: [
-          "read",
-          "write",
-          "manage_users",
-          "manage_institutions",
-          "manage_students",
-          "view_students",
-          "view_reports",
-          "send_messages",
-        ],
-        status: "ACTIVE",
-        createdAt: "2023-01-15T00:00:00Z",
-        updatedAt: "2023-01-15T00:00:00Z",
-      },
-      {
-        id: "3",
-        name: "Content Editor",
-        description: "Create and manage blog content and articles",
-        userCount: 5,
-        permissions: [
-          "read",
-          "write",
-          "manage_blogs",
-          "publish_content",
-          "view_reports",
-        ],
-        status: "ACTIVE",
-        createdAt: "2023-02-01T00:00:00Z",
-        updatedAt: "2023-02-01T00:00:00Z",
-      },
-    ];
+  // Fetch members from API
+  const fetchMembers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    setRoles(defaultRoles);
+      const response = await apiClient.getRolesUnderAdmin();
 
-    // Calculate stats
-    const totalUsers = defaultRoles.reduce(
-      (sum, role) => sum + role.userCount,
-      0,
-    );
-    const activeRoles = defaultRoles.filter(
-      (role) => role.status === "ACTIVE",
-    ).length;
-    const inactiveRoles = defaultRoles.filter(
-      (role) => role.status === "INACTIVE",
-    ).length;
+      if (response.success && response.data) {
+        // Map API response to Member objects
+        const apiMembers: Member[] = response.data.map((member: MembersApiResponse) => ({
+          id: member.id,
+          email: member.email,
+          firstName: member.firstName,
+          lastName: member.lastName,
+          roleName: member.roleName,
+          phone: member.phone,
+          adminId: member.adminId,
+          createdAt: member.createdAt,
+          updatedAt: member.updatedAt,
+        }));
 
-    setStats({
-      total: defaultRoles.length,
-      active: activeRoles,
-      inactive: inactiveRoles,
-      totalUsers,
-    });
+        setMembers(apiMembers);
 
-    setLoading(false);
+        // Calculate stats
+        const uniqueRoles = new Set(apiMembers.map(member => member.roleName)).size;
+
+        setStats({
+          total: apiMembers.length,
+          uniqueRoles,
+          totalMembers: apiMembers.length,
+        });
+      } else {
+        setError(response.message || "Failed to fetch members");
+      }
+    } catch (err) {
+      console.error("Error fetching members:", err);
+      setError(handleApiError(err));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Create new role
-  const handleCreateRole = async (e: React.FormEvent) => {
+  // Initialize members on component mount
+  useEffect(() => {
+    fetchMembers();
+  }, [fetchMembers]);
+
+  // Create new member
+  const handleCreateMember = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.description) {
-      setError("Please fill in all required fields");
+    // Validate required fields
+    if (!formData.email || !formData.firstName || !formData.roleName || !formData.password) {
+      setError("Please fill in all required fields (email, first name, role name, password)");
       return;
     }
 
@@ -281,77 +160,75 @@ export default function RolesPage() {
       setCreateLoading(true);
       setError("");
 
-      // Create new role
-      const newRole: Role = {
-        id: Date.now().toString(),
-        name: formData.name,
-        description: formData.description,
-        userCount: 0,
-        permissions: formData.permissions,
-        status: formData.status,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      setRoles((prev) => [...prev, newRole]);
-
-      // Update stats
-      setStats((prev) => ({
-        ...prev,
-        total: prev.total + 1,
-        active: formData.status === "ACTIVE" ? prev.active + 1 : prev.active,
-        inactive:
-          formData.status === "INACTIVE" ? prev.inactive + 1 : prev.inactive,
-      }));
-
-      // Reset form
-      setFormData({
-        name: "",
-        description: "",
-        permissions: [],
-        status: "ACTIVE",
+      const response = await apiClient.createRoleUnderAdmin({
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName || undefined,
+        phone: formData.phone || undefined,
+        roleName: formData.roleName,
+        password: formData.password,
       });
-      setShowCreateForm(false);
+
+      if (response.success) {
+        // Add the new member to the list
+        if (response.data) {
+          setMembers((prev) => [response.data!, ...prev]);
+          // Update stats - recalculate unique roles from all members
+          setStats((prev) => {
+            const allMembers = [response.data!, ...members];
+            const uniqueRoles = new Set(allMembers.map(m => m.roleName)).size;
+            return {
+              ...prev,
+              total: prev.total + 1,
+              totalMembers: prev.totalMembers + 1,
+              uniqueRoles,
+            };
+          });
+        }
+
+        // Reset form
+        setFormData({
+          email: "",
+          firstName: "",
+          lastName: "",
+          phone: "",
+          roleName: "",
+          password: "",
+        });
+        setShowCreateForm(false);
+      } else {
+        setError(response.message || "Failed to create member");
+      }
     } catch (err) {
-      console.error("Error creating role:", err);
+      console.error("Error creating member:", err);
       setError(handleApiError(err));
     } finally {
       setCreateLoading(false);
     }
   };
 
-  // Handle permission change
-  const handlePermissionChange = (permissionId: string, checked: boolean) => {
-    setFormData((prev) => ({
-      ...prev,
-      permissions: checked
-        ? [...prev.permissions, permissionId]
-        : prev.permissions.filter((p) => p !== permissionId),
-    }));
-  };
 
-  // Filter roles based on search term and status
-  const filteredRoles = roles.filter((role) => {
+  // Filter members based on search term
+  const filteredMembers = members.filter((member) => {
     const matchesSearch =
-      role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      role.description.toLowerCase().includes(searchTerm.toLowerCase());
+      member.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      member.roleName.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "ALL" || role.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   // Pagination logic
-  const totalPages = Math.ceil(filteredRoles.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredMembers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedRoles = filteredRoles.slice(startIndex, endIndex);
+  const paginatedMembers = filteredMembers.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, itemsPerPage]);
+  }, [searchTerm, itemsPerPage]);
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -363,16 +240,16 @@ export default function RolesPage() {
     setItemsPerPage(parseInt(value));
   };
 
-  // Handle role actions
-  const handleRoleAction = async (
-    roleId: string,
+  // Handle member actions
+  const handleMemberAction = async (
+    memberId: string,
     action: "view" | "edit" | "delete",
   ) => {
     switch (action) {
       case "view":
-        const role = roles.find((r) => r.id === roleId);
-        if (role) {
-          setSelectedRole(role);
+        const member = members.find((m) => m.id === memberId);
+        if (member) {
+          setSelectedMember(member);
           setViewMode("detail");
         }
         break;
@@ -380,44 +257,16 @@ export default function RolesPage() {
         // Handle edit logic here
         break;
       case "delete":
-        if (confirm("Are you sure you want to delete this role?")) {
-          setRoles((prev) => prev.filter((r) => r.id !== roleId));
-          // Update stats
-          const deletedRole = roles.find((r) => r.id === roleId);
-          if (deletedRole) {
-            setStats((prev) => ({
-              ...prev,
-              total: prev.total - 1,
-              active:
-                deletedRole.status === "ACTIVE" ? prev.active - 1 : prev.active,
-              inactive:
-                deletedRole.status === "INACTIVE"
-                  ? prev.inactive - 1
-                  : prev.inactive,
-              totalUsers: prev.totalUsers - deletedRole.userCount,
-            }));
-          }
-        }
+        // Members deletion might not be allowed from this view
+        // Handle delete logic here if needed
         break;
     }
   };
 
   // Handle back to list
   const handleBackToList = () => {
-    setSelectedRole(null);
+    setSelectedMember(null);
     setViewMode("list");
-  };
-
-  // Get status color
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "default";
-      case "INACTIVE":
-        return "secondary";
-      default:
-        return "secondary";
-    }
   };
 
   // Format date
@@ -428,19 +277,6 @@ export default function RolesPage() {
       day: "numeric",
     });
   };
-
-  // Group permissions by category
-  const groupedPermissions = availablePermissions.reduce(
-    (acc, permission) => {
-      const category = permission.category;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(permission);
-      return acc;
-    },
-    {} as Record<string, typeof availablePermissions>,
-  );
 
   function AccordionSection({
     title,
@@ -485,53 +321,21 @@ export default function RolesPage() {
               </Button>
               <div>
                 <h1 className="text-2xl text-neutral-700 font-semibold tracking-tight">
-                  Role Details
+                  Member Details
                 </h1>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Filter Buttons */}
+              {/* Stats Display */}
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className=" text-lg text-neutral-700 mr-4">
-                  All Roles
+                  Team Members
                 </h1>
-                <Button
-                  variant={statusFilter === "ALL" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("ALL")}
-                  className={
-                    statusFilter === "ALL"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
-                >
-                  All ({stats.total})
-                </Button>
-                <Button
-                  variant={statusFilter === "ACTIVE" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("ACTIVE")}
-                  className={
-                    statusFilter === "ACTIVE"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
-                >
-                  Active ({stats.active})
-                </Button>
-                <Button
-                  variant={statusFilter === "INACTIVE" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("INACTIVE")}
-                  className={
-                    statusFilter === "INACTIVE"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
-                >
-                  Inactive ({stats.inactive})
-                </Button>
+                <div className="flex gap-4 text-sm text-gray-600">
+                  <span>Total Members: {stats.totalMembers}</span>
+                  <span>Unique Roles: {stats.uniqueRoles}</span>
+                </div>
               </div>
             </div>
           )}
@@ -564,7 +368,7 @@ export default function RolesPage() {
               ) : (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  New Role
+                  Add Member
                 </>
               )}
             </Button>
@@ -577,28 +381,29 @@ export default function RolesPage() {
         <Card className="max-w-7xl mx-auto">
           <CardHeader className="text-left pb-6">
             <CardTitle className="text-xl font-semibold text-gray-900">
-              Create a new role
+              Add a new member
             </CardTitle>
             <div className="w-full h-px bg-gray-200 mt-4"></div>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleCreateRole} className="space-y-6">
+            <form onSubmit={handleCreateMember} className="space-y-6">
               <div className="grid gap-6 md:grid-cols-2">
                 {/* Left Column */}
                 <div className="space-y-4">
-                  {/* Role Name */}
+                  {/* Email */}
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                      Role Name
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      Email *
                     </Label>
                     <Input
-                      id="name"
-                      placeholder="Enter role name"
-                      value={formData.name}
+                      id="email"
+                      type="email"
+                      placeholder="Enter email address"
+                      value={formData.email}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          name: e.target.value,
+                          email: e.target.value,
                         }))
                       }
                       required
@@ -609,52 +414,120 @@ export default function RolesPage() {
                     />
                   </div>
 
-                  {/* Status */}
+                  {/* First Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="status" className="text-sm font-medium text-gray-700">
-                      Status
+                    <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                      First Name *
                     </Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value: "ACTIVE" | "INACTIVE") =>
-                        setFormData((prev) => ({ ...prev, status: value }))
+                    <Input
+                      id="firstName"
+                      placeholder="Enter first name"
+                      value={formData.firstName}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          firstName: e.target.value,
+                        }))
                       }
-                    >
-                      <SelectTrigger className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400" style={{
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
                         background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
-                      }}>
-                        <SelectValue placeholder="Select status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="ACTIVE">Active</SelectItem>
-                        <SelectItem value="INACTIVE">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      }}
+                    />
+                  </div>
+
+                  {/* Last Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                      Last Name
+                    </Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Enter last name"
+                      value={formData.lastName}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          lastName: e.target.value,
+                        }))
+                      }
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
                   </div>
                 </div>
 
                 {/* Right Column */}
                 <div className="space-y-4">
-                  {/* Description */}
+                  {/* Phone */}
                   <div className="space-y-2">
-                    <Label htmlFor="description" className="text-sm font-medium text-gray-700">
-                      Description
+                    <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                      Phone
                     </Label>
-                    <Textarea
-                      id="description"
-                      placeholder="Enter role description"
-                      className="min-h-[100px] border-0 focus:border-orange-400 focus:ring-orange-400 resize-none"
-                      style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
-                      }}
-                      value={formData.description}
+                    <Input
+                      id="phone"
+                      placeholder="Enter phone number"
+                      value={formData.phone}
                       onChange={(e) =>
                         setFormData((prev) => ({
                           ...prev,
-                          description: e.target.value,
+                          phone: e.target.value,
+                        }))
+                      }
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Role Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="roleName" className="text-sm font-medium text-gray-700">
+                      Role Name *
+                    </Label>
+                    <Input
+                      id="roleName"
+                      placeholder="Enter role name (e.g., Content Manager)"
+                      value={formData.roleName}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          roleName: e.target.value,
                         }))
                       }
                       required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-medium text-gray-700">
+                      Password *
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="Enter password"
+                      value={formData.password}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
                     />
                   </div>
                 </div>
@@ -689,7 +562,7 @@ export default function RolesPage() {
                       Creating...
                     </>
                   ) : (
-                    "Create role"
+                    "Add Member"
                   )}
                 </Button>
               </div>
@@ -728,22 +601,12 @@ export default function RolesPage() {
                 {/* Roles List */}
                 {!loading && !error && (
                   <>
-                    {filteredRoles.length === 0 ? (
+                    {filteredMembers.length === 0 ? (
                       <div className="text-center py-12">
                         <p className="text-muted-foreground">
-                          {searchTerm || statusFilter !== "ALL"
-                            ? `No roles found matching ${
-                                searchTerm ? "your search" : ""
-                              }${
-                                searchTerm && statusFilter !== "ALL"
-                                  ? " and "
-                                  : ""
-                              }${
-                                statusFilter !== "ALL"
-                                  ? `status "${statusFilter.toLowerCase()}"`
-                                  : ""
-                              }.`
-                            : "No roles found."}
+                          {searchTerm
+                            ? `No members found matching your search.`
+                            : "No team members found."}
                         </p>
                       </div>
                     ) : (
@@ -753,13 +616,16 @@ export default function RolesPage() {
                             <TableHeader>
                               <TableRow className="bg-brand-gradient text-white">
                                 <TableHead className="text-white min-w-[200px] px-4">
-                                  Role Name
+                                  Name
                                 </TableHead>
-                                <TableHead className="text-white min-w-[120px] px-4">
-                                  Assigned Users
+                                <TableHead className="text-white min-w-[200px] px-4">
+                                  Email
                                 </TableHead>
-                                <TableHead className="text-white min-w-[250px] px-4">
-                                  Permission Summary
+                                <TableHead className="text-white min-w-[150px] px-4">
+                                  Role
+                                </TableHead>
+                                <TableHead className="text-white min-w-[150px] px-4">
+                                  Phone
                                 </TableHead>
                                 <TableHead className="text-white text-right min-w-[100px] px-4">
                                   Actions
@@ -767,31 +633,37 @@ export default function RolesPage() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {paginatedRoles.map((role) => (
+                              {paginatedMembers.map((member) => (
                                 <TableRow
-                                  key={role.id}
+                                  key={member.id}
                                   className="hover:bg-gray-50"
                                 >
-                                  {/* Role Name Column */}
+                                  {/* Name Column */}
                                   <TableCell className="px-4">
                                     <h3 className="text-base text-gray-900">
-                                      {role.name}
+                                      {member.firstName} {member.lastName}
                                     </h3>
                                   </TableCell>
 
-                                  {/* Assigned Users Column */}
+                                  {/* Email Column */}
                                   <TableCell className="px-4">
-                                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                      <Users className="h-4 w-4 flex-shrink-0" />
-                                      <span>{role.userCount} users</span>
+                                    <div className="text-sm text-gray-600">
+                                      {member.email}
                                     </div>
                                   </TableCell>
 
-                                  {/* Permission Summary Column */}
+                                  {/* Role Column */}
                                   <TableCell className="px-4">
-                                    <p className="text-sm text-gray-600 line-clamp-2">
-                                      {role.description}
-                                    </p>
+                                    <Badge variant="outline" className="text-xs">
+                                      {member.roleName}
+                                    </Badge>
+                                  </TableCell>
+
+                                  {/* Phone Column */}
+                                  <TableCell className="px-4">
+                                    <div className="text-sm text-gray-600">
+                                      {member.phone}
+                                    </div>
                                   </TableCell>
 
                                   {/* Actions Column */}
@@ -799,7 +671,7 @@ export default function RolesPage() {
                                     <Button
                                       size="sm"
                                       onClick={() =>
-                                        handleRoleAction(role.id, "view")
+                                        handleMemberAction(member.id, "view")
                                       }
                                       className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
                                     >
@@ -815,7 +687,7 @@ export default function RolesPage() {
                     )}
 
                     {/* Pagination and Summary */}
-                    {filteredRoles.length > 0 && (
+                    {filteredMembers.length > 0 && (
                       <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                           {/* Items per page selector */}
@@ -833,7 +705,7 @@ export default function RolesPage() {
                                 <SelectItem value="100">100</SelectItem>
                               </SelectContent>
                             </Select>
-                            <span className="text-sm text-muted-foreground">of {filteredRoles.length} roles</span>
+                            <span className="text-sm text-muted-foreground">of {filteredMembers.length} members</span>
                           </div>
 
                           {/* Page navigation */}
@@ -899,8 +771,8 @@ export default function RolesPage() {
               </CardContent>
             </Card>
           ) : (
-            /* Role Detail View */
-            selectedRole && (
+            /* Member Detail View */
+            selectedMember && (
               <Card className="py-0">
                 <CardContent className="p-8">
                   <div className="space-y-8">
@@ -912,98 +784,58 @@ export default function RolesPage() {
                           <Shield className="h-12 w-12 text-orange-600" />
                         </div>
 
-                        {/* Role Info */}
+                        {/* Member Info */}
                         <div className="flex-1">
                           <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-                            {selectedRole.name}
+                            {selectedMember.firstName} {selectedMember.lastName}
                           </h1>
                           <p className="text-xl text-gray-600 mb-4">
-                            Role
+                            {selectedMember.roleName}
                           </p>
                         </div>
                       </div>
                       <Badge
-                        variant={getStatusColor(selectedRole.status)}
+                        variant="outline"
                         className="text-sm"
                       >
-                        {selectedRole.status}
+                        {selectedMember.roleName}
                       </Badge>
                     </div>
 
                     {/* Accordion sections */}
                     <div className="space-y-3">
-                      <AccordionSection title="Overview" defaultOpen>
+                      <AccordionSection title="Member Information" defaultOpen>
                         <div className="grid md:grid-cols-2 gap-6">
                           <div className="space-y-3">
                             <div className="flex items-center gap-3">
-                              <Shield className="h-5 w-5 text-gray-400" />
+                              <UserCheck className="h-5 w-5 text-gray-400" />
                               <div>
-                                <p className="text-sm text-gray-600">Role Name</p>
-                                <p className="font-medium">{selectedRole.name}</p>
+                                <p className="text-sm text-gray-600">Full Name</p>
+                                <p className="font-medium">{selectedMember.firstName} {selectedMember.lastName}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <Users className="h-5 w-5 text-gray-400" />
+                              <Mail className="h-5 w-5 text-gray-400" />
                               <div>
-                                <p className="text-sm text-gray-600">Users Assigned</p>
-                                <p className="font-medium">{selectedRole.userCount} users</p>
+                                <p className="text-sm text-gray-600">Email</p>
+                                <p className="font-medium">{selectedMember.email}</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                              <Phone className="h-5 w-5 text-gray-400" />
+                              <div>
+                                <p className="text-sm text-gray-600">Phone</p>
+                                <p className="font-medium">{selectedMember.phone}</p>
                               </div>
                             </div>
                           </div>
                           <div className="space-y-3 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-600">Status</span><Badge variant={getStatusColor(selectedRole.status)}>{selectedRole.status}</Badge></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Permissions</span><span>{selectedRole.permissions.length} permissions</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Created</span><span>{formatDate(selectedRole.createdAt)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Updated</span><span>{formatDate(selectedRole.updatedAt)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Role</span><Badge variant="outline">{selectedMember.roleName}</Badge></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Member ID</span><span className="font-mono text-xs">{selectedMember.id}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Admin ID</span><span className="font-mono text-xs">{selectedMember.adminId}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Created</span><span>{formatDate(selectedMember.createdAt)}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-600">Updated</span><span>{formatDate(selectedMember.updatedAt)}</span></div>
                           </div>
-                        </div>
-                      </AccordionSection>
-
-                      <AccordionSection title="Description">
-                        <div className="prose prose-sm max-w-none">
-                          <div className="whitespace-pre-wrap text-gray-700 leading-relaxed">
-                            {selectedRole.description}
-                          </div>
-                        </div>
-                      </AccordionSection>
-
-                      <AccordionSection title="Permissions">
-                        <div className="space-y-4">
-                          {Object.entries(groupedPermissions).map(
-                            ([category, permissions]) => {
-                              const rolePermissions = permissions.filter((p) =>
-                                selectedRole.permissions.includes(p.id),
-                              );
-
-                              if (rolePermissions.length === 0) return null;
-
-                              return (
-                                <div key={category}>
-                                  <h4 className="font-medium text-sm text-gray-700 mb-3">
-                                    {category}
-                                  </h4>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    {rolePermissions.map((permission) => (
-                                      <div
-                                        key={permission.id}
-                                        className="flex items-center gap-3 p-3 bg-white rounded border"
-                                      >
-                                        <Key className="h-4 w-4 text-gray-400" />
-                                        <div>
-                                          <p className="font-medium text-sm">
-                                            {permission.name}
-                                          </p>
-                                          <p className="text-xs text-gray-500">
-                                            {permission.description}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              );
-                            },
-                          )}
                         </div>
                       </AccordionSection>
                     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import {
   Search,
   Plus,
@@ -34,30 +35,14 @@ import {
 } from "@/components/ui/table";
 
 import { apiClient, handleApiError } from "@/lib/api";
+import type { Institution } from "@/lib/types";
 
 // Types
-interface SuperInstitutionAdmin {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
-  lastLogin?: string;
-}
-
-interface SuperInstitutionAdminFormData {
-  name: string;
-  email: string;
-  password: string;
-  role: string;
-}
-
-interface SuperInstitutionAdminStats {
+interface InstitutionStats {
   total: number;
-  active: number;
-  inactive: number;
+  approved: number;
+  pending: number;
+  suspended: number;
 }
 
 // Available roles for super institution admin
@@ -69,58 +54,28 @@ const availableRoles = [
   },
 ];
 
-// Mock data for demonstration
-const mockAdmins: SuperInstitutionAdmin[] = [
-  {
-    id: "1",
-    name: "John Admin",
-    email: "john.admin@example.com",
-    role: "SUPER_INSTITUTION_ADMIN",
-    isActive: true,
-    createdAt: "2024-01-15T10:00:00Z",
-    updatedAt: "2024-01-20T15:30:00Z",
-    lastLogin: "2024-01-20T15:30:00Z",
-  },
-  {
-    id: "2",
-    name: "Sarah Manager",
-    email: "sarah.manager@example.com",
-    role: "SUPER_INSTITUTION_ADMIN",
-    isActive: true,
-    createdAt: "2024-01-10T08:00:00Z",
-    updatedAt: "2024-01-18T12:00:00Z",
-    lastLogin: "2024-01-18T12:00:00Z",
-  },
-  {
-    id: "3",
-    name: "Mike Supervisor",
-    email: "mike.supervisor@example.com",
-    role: "SUPER_INSTITUTION_ADMIN",
-    isActive: false,
-    createdAt: "2024-01-05T09:00:00Z",
-    updatedAt: "2024-01-12T11:00:00Z",
-  },
-];
+// Removed mock data - now using API
 
 export default function SuperInstitutionAdminPage() {
-  const [admins, setAdmins] = useState<SuperInstitutionAdmin[]>([]);
-  const [stats, setStats] = useState<SuperInstitutionAdminStats>({
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [stats, setStats] = useState<InstitutionStats>({
     total: 0,
-    active: 0,
-    inactive: 0,
+    approved: 0,
+    pending: 0,
+    suspended: 0,
   });
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [statusFilter, setStatusFilter] = useState<
-    "ALL" | "ACTIVE" | "INACTIVE"
+    "ALL" | "APPROVED" | "PENDING" | "SUSPENDED"
   >("ALL");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
-  const [selectedAdmin, setSelectedAdmin] =
-    useState<SuperInstitutionAdmin | null>(null);
-  const [formData, setFormData] = useState<SuperInstitutionAdminFormData>({
+  const [selectedInstitution, setSelectedInstitution] =
+    useState<Institution | null>(null);
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
@@ -130,33 +85,38 @@ export default function SuperInstitutionAdminPage() {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadAdmins = useCallback(async () => {
+  const loadInstitutions = useCallback(async () => {
     try {
       setLoading(true);
-      // For now, using mock data. Replace with actual API call when backend is ready
-      // const response = await apiClient.getSuperInstitutionAdmins();
-      // setAdmins(response.data || []);
 
-      // Mock API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setAdmins(mockAdmins);
+      const response = await apiClient.getSuperInstitutionAdminsInstitutions(currentPage, itemsPerPage);
 
-      // Calculate stats
-      const total = mockAdmins.length;
-      const active = mockAdmins.filter((admin) => admin.isActive).length;
-      const inactive = total - active;
-      setStats({ total, active, inactive });
+      if (response.success && response.data) {
+        setInstitutions(response.data.data || []);
+
+        // Calculate stats
+        const total = response.data.meta.total;
+        const approved = response.data.data.filter((inst) => inst.approvalStatus === "APPROVED").length;
+        const pending = response.data.data.filter((inst) => inst.approvalStatus === "PENDING").length;
+        const suspended = response.data.data.filter((inst) => inst.isSuspended).length;
+        setStats({ total, approved, pending, suspended });
+      } else {
+        setInstitutions([]);
+        setStats({ total: 0, approved: 0, pending: 0, suspended: 0 });
+      }
     } catch (error) {
-      console.error("Failed to load admins:", error);
-      console.error("Failed to load super institution admins");
+      console.error("Failed to load institutions:", error);
+      setError(handleApiError(error));
+      setInstitutions([]);
+      setStats({ total: 0, approved: 0, pending: 0, suspended: 0 });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
-    loadAdmins();
-  }, [loadAdmins]);
+    loadInstitutions();
+  }, [loadInstitutions]);
 
   const handleCreateAdmin = async () => {
     try {
@@ -190,7 +150,7 @@ export default function SuperInstitutionAdminPage() {
           password: "",
           role: "SUPER_INSTITUTION_ADMIN",
         });
-        loadAdmins(); // Refresh the list
+        loadInstitutions(); // Refresh the list
       } else {
         setError(response.message || "Failed to create admin");
       }
@@ -203,35 +163,36 @@ export default function SuperInstitutionAdminPage() {
     }
   };
 
-  const handleViewAdmin = (admin: SuperInstitutionAdmin) => {
-    setSelectedAdmin(admin);
+  const handleViewInstitution = (institution: Institution) => {
+    setSelectedInstitution(institution);
     setViewMode("detail");
   };
 
   const handleBackToList = () => {
-    setSelectedAdmin(null);
+    setSelectedInstitution(null);
     setViewMode("list");
   };
 
-  const filteredAdmins = admins.filter((admin) => {
+  const filteredInstitutions = institutions.filter((institution) => {
     const matchesSearch =
-      admin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      admin.email.toLowerCase().includes(searchQuery.toLowerCase());
+      institution.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      institution.email.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus =
       statusFilter === "ALL" ||
-      (statusFilter === "ACTIVE" && admin.isActive) ||
-      (statusFilter === "INACTIVE" && !admin.isActive);
+      (statusFilter === "APPROVED" && institution.approvalStatus === "APPROVED") ||
+      (statusFilter === "PENDING" && institution.approvalStatus === "PENDING") ||
+      (statusFilter === "SUSPENDED" && institution.isSuspended);
 
     return matchesSearch && matchesStatus;
   });
 
-  const paginatedAdmins = filteredAdmins.slice(
+  const paginatedInstitutions = filteredInstitutions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const totalPages = Math.ceil(filteredAdmins.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredInstitutions.length / itemsPerPage);
 
   // Reset to first page when filters change
   useEffect(() => {
@@ -309,7 +270,7 @@ export default function SuperInstitutionAdminPage() {
               </Button>
               <div>
                 <h1 className="text-2xl text-neutral-700 font-semibold tracking-tight">
-                  Super Institution Admin Details
+                  Institution Details
                 </h1>
               </div>
             </div>
@@ -318,7 +279,7 @@ export default function SuperInstitutionAdminPage() {
               {/* Filter Buttons */}
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="text-lg text-neutral-700 mr-4">
-                  All Super Institution Admins
+                  All Institutions
                 </h1>
                 <Button
                   variant={statusFilter === "ALL" ? "default" : "outline"}
@@ -333,28 +294,40 @@ export default function SuperInstitutionAdminPage() {
                   All ({stats.total})
                 </Button>
                 <Button
-                  variant={statusFilter === "ACTIVE" ? "default" : "outline"}
+                  variant={statusFilter === "APPROVED" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setStatusFilter("ACTIVE")}
+                  onClick={() => setStatusFilter("APPROVED")}
                   className={
-                    statusFilter === "ACTIVE"
+                    statusFilter === "APPROVED"
                       ? "bg-brand-gradient text-white rounded-full"
                       : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
                   }
                 >
-                  Active ({stats.active})
+                  Approved ({stats.approved})
                 </Button>
                 <Button
-                  variant={statusFilter === "INACTIVE" ? "default" : "outline"}
+                  variant={statusFilter === "PENDING" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setStatusFilter("INACTIVE")}
+                  onClick={() => setStatusFilter("PENDING")}
                   className={
-                    statusFilter === "INACTIVE"
+                    statusFilter === "PENDING"
                       ? "bg-brand-gradient text-white rounded-full"
                       : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
                   }
                 >
-                  Inactive ({stats.inactive})
+                  Pending ({stats.pending})
+                </Button>
+                <Button
+                  variant={statusFilter === "SUSPENDED" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setStatusFilter("SUSPENDED")}
+                  className={
+                    statusFilter === "SUSPENDED"
+                      ? "bg-brand-gradient text-white rounded-full"
+                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
+                  }
+                >
+                  Suspended ({stats.suspended})
                 </Button>
               </div>
             </div>
@@ -366,7 +339,7 @@ export default function SuperInstitutionAdminPage() {
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Search admins..."
+                  placeholder="Search institutions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
@@ -380,6 +353,7 @@ export default function SuperInstitutionAdminPage() {
             <Button
               onClick={() => setShowCreateForm(!showCreateForm)}
               className="whitespace-nowrap"
+              disabled
             >
               {showCreateForm ? (
                 <>
@@ -389,7 +363,7 @@ export default function SuperInstitutionAdminPage() {
               ) : (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  New Super Institution Admin
+                  Add New Institution
                 </>
               )}
             </Button>
@@ -597,9 +571,10 @@ export default function SuperInstitutionAdminPage() {
                 <Table>
                   <TableHeader className="p-2">
                     <TableRow className="bg-brand-gradient text-white p-2">
-                      <TableHead className="text-white">Name</TableHead>
+                      <TableHead className="text-white">Institution Name</TableHead>
+                      <TableHead className="text-white">Type</TableHead>
                       <TableHead className="text-white">Email</TableHead>
-                      <TableHead className="text-white">Role</TableHead>
+                      <TableHead className="text-white">Board</TableHead>
                       <TableHead className="text-white">Status</TableHead>
                       <TableHead className="text-white text-right">
                         Actions
@@ -607,43 +582,39 @@ export default function SuperInstitutionAdminPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paginatedAdmins.map((admin) => (
-                      <TableRow key={admin.id}>
+                    {paginatedInstitutions.map((institution) => (
+                      <TableRow key={institution.id}>
                         <TableCell className="font-medium">
                           <div className="flex items-center space-x-2">
                             <User className="h-4 w-4" />
-                            <span>{admin.name}</span>
+                            <span>{institution.name}</span>
                           </div>
                         </TableCell>
+                        <TableCell>{institution.type}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
                             <Mail className="h-4 w-4" />
-                            <span>{admin.email}</span>
+                            <span>{institution.email}</span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className="border-orange-400 text-orange-600"
-                          >
-                            {admin.role}
-                          </Badge>
-                        </TableCell>
+                        <TableCell>{institution.affiliatedBoard}</TableCell>
                         <TableCell>
                           <Badge
                             className={`${
-                              admin.isActive
-                                ? "bg-transparent text-orange-600 border border-orange-400"
+                              institution.approvalStatus === "APPROVED"
+                                ? "bg-transparent text-green-600 border border-green-400"
+                                : institution.approvalStatus === "PENDING"
+                                ? "bg-transparent text-yellow-600 border border-yellow-400"
                                 : "bg-gray-200 text-gray-600"
                             }`}
                           >
-                            {admin.isActive ? "Active" : "Inactive"}
+                            {institution.approvalStatus}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
                             size="sm"
-                            onClick={() => handleViewAdmin(admin)}
+                            onClick={() => handleViewInstitution(institution)}
                             className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
                           >
                             View
@@ -683,7 +654,7 @@ export default function SuperInstitutionAdminPage() {
                   </SelectContent>
                 </Select>
                 <span className="text-sm text-muted-foreground">
-                  of {filteredAdmins.length} admins
+                  of {filteredInstitutions.length} institutions
                 </span>
               </div>
 
@@ -750,38 +721,50 @@ export default function SuperInstitutionAdminPage() {
       )}
 
       {/* Detail View */}
-      {!showCreateForm && viewMode === "detail" && selectedAdmin && (
+      {!showCreateForm && viewMode === "detail" && selectedInstitution && (
         <Card className="py-0">
           <CardContent className="p-8">
             <div className="space-y-8">
               {/* Header Section */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-6">
-                  {/* Avatar */}
+                  {/* Logo/Avatar */}
                   <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-3xl font-medium text-primary">
-                      {selectedAdmin.name.charAt(0).toUpperCase()}
-                    </span>
+                    {selectedInstitution.logoUrl ? (
+                      <Image
+                        src={selectedInstitution.logoUrl}
+                        alt={selectedInstitution.name}
+                        width={80}
+                        height={80}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    ) : (
+                      <span className="text-3xl font-medium text-primary">
+                        {selectedInstitution.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Admin Info */}
+                  {/* Institution Info */}
                   <div className="flex-1">
                     <h1 className="text-3xl font-semibold text-gray-900 mb-2">
-                      {selectedAdmin.name}
+                      {selectedInstitution.name}
                     </h1>
                     <p className="text-xl text-gray-600 mb-4">
-                      Super Institution Admin
+                      {selectedInstitution.type} - {selectedInstitution.affiliatedBoard}
                     </p>
                   </div>
                 </div>
                 <Badge
                   className={`text-sm ${
-                    selectedAdmin.isActive
-                      ? "bg-transparent text-orange-600 border border-orange-400"
+                    selectedInstitution.approvalStatus === "APPROVED"
+                      ? "bg-transparent text-green-600 border border-green-400"
+                      : selectedInstitution.approvalStatus === "PENDING"
+                      ? "bg-transparent text-yellow-600 border border-yellow-400"
                       : "bg-gray-200 text-gray-600"
                   }`}
                 >
-                  {selectedAdmin.isActive ? "Active" : "Inactive"}
+                  {selectedInstitution.approvalStatus}
                 </Badge>
               </div>
 
@@ -794,14 +777,21 @@ export default function SuperInstitutionAdminPage() {
                         <Mail className="h-5 w-5 text-gray-400" />
                         <div>
                           <p className="text-sm text-gray-600">Email</p>
-                          <p className="font-medium">{selectedAdmin.email}</p>
+                          <p className="font-medium">{selectedInstitution.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         <User className="h-5 w-5 text-gray-400" />
                         <div>
-                          <p className="text-sm text-gray-600">Role</p>
-                          <p className="font-medium">{selectedAdmin.role}</p>
+                          <p className="text-sm text-gray-600">Type</p>
+                          <p className="font-medium">{selectedInstitution.type}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="h-5 w-5 text-gray-400">📚</span>
+                        <div>
+                          <p className="text-sm text-gray-600">Board</p>
+                          <p className="font-medium">{selectedInstitution.affiliatedBoard}</p>
                         </div>
                       </div>
                     </div>
@@ -810,49 +800,113 @@ export default function SuperInstitutionAdminPage() {
                         <span className="text-gray-600">Status</span>
                         <Badge
                           className={`${
-                            selectedAdmin.isActive
-                              ? "bg-transparent text-orange-600 border border-orange-400"
+                            selectedInstitution.approvalStatus === "APPROVED"
+                              ? "bg-transparent text-green-600 border border-green-400"
+                              : selectedInstitution.approvalStatus === "PENDING"
+                              ? "bg-transparent text-yellow-600 border border-yellow-400"
                               : "bg-gray-200 text-gray-600"
                           }`}
                         >
-                          {selectedAdmin.isActive ? "Active" : "Inactive"}
+                          {selectedInstitution.approvalStatus}
                         </Badge>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Created</span>
-                        <span>{formatDate(selectedAdmin.createdAt)}</span>
+                        <span className="text-gray-600">Students</span>
+                        <span>{selectedInstitution.totalStudentStrength}</span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Last Login</span>
-                        <span>
-                          {selectedAdmin.lastLogin
-                            ? formatDate(selectedAdmin.lastLogin)
-                            : "Never"}
-                        </span>
+                        <span className="text-gray-600">Established</span>
+                        <span>{selectedInstitution.yearOfEstablishment}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Created</span>
+                        <span>{formatDate(selectedInstitution.createdAt)}</span>
                       </div>
                     </div>
                   </div>
                 </AccordionSection>
 
-                <AccordionSection title="Permissions">
-                  <p className="text-sm text-gray-600">
-                    Full access to institution management and admin functions
-                  </p>
+                <AccordionSection title="Contact Information">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-400">📞</span>
+                      <div>
+                        <p className="text-sm text-gray-600">Phone</p>
+                        <p className="font-medium">{selectedInstitution.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-400">🌐</span>
+                      <div>
+                        <p className="text-sm text-gray-600">Website</p>
+                        <p className="font-medium">
+                          {selectedInstitution.website ? (
+                            <a
+                              href={selectedInstitution.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {selectedInstitution.website}
+                            </a>
+                          ) : (
+                            "Not provided"
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-400">📍</span>
+                      <div>
+                        <p className="text-sm text-gray-600">Address</p>
+                        <p className="font-medium">{selectedInstitution.address}</p>
+                      </div>
+                    </div>
+                  </div>
                 </AccordionSection>
 
-                <AccordionSection title="Activity">
-                  <p className="text-sm text-gray-600">Coming soon</p>
+                <AccordionSection title="Documents">
+                  <div className="space-y-3 text-sm">
+                    <div className="flex items-center gap-3">
+                      <span className="text-gray-400">📄</span>
+                      <div>
+                        <p className="text-sm text-gray-600">Proof of Institution</p>
+                        <p className="font-medium">
+                          {selectedInstitution.proofOfInstitutionUrl ? (
+                            <a
+                              href={selectedInstitution.proofOfInstitutionUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              View Document
+                            </a>
+                          ) : (
+                            "Not uploaded"
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </AccordionSection>
 
-                <AccordionSection title="Analytics summary">
+                <AccordionSection title="Institution Details">
                   <div className="grid md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <div className="text-gray-600 mb-1">Created</div>
-                      <div>{formatDate(selectedAdmin.createdAt)}</div>
+                      <div>{formatDate(selectedInstitution.createdAt)}</div>
                     </div>
                     <div>
                       <div className="text-gray-600 mb-1">Last Updated</div>
-                      <div>{formatDate(selectedAdmin.updatedAt)}</div>
+                      <div>{formatDate(selectedInstitution.updatedAt)}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600 mb-1">POC Name</div>
+                      <div>{selectedInstitution.pocName || "Not provided"}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600 mb-1">Suspended</div>
+                      <div>{selectedInstitution.isSuspended ? "Yes" : "No"}</div>
                     </div>
                   </div>
                 </AccordionSection>

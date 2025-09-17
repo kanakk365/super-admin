@@ -46,6 +46,7 @@ import type {
   InstitutionStudentsResponse,
   InstitutionSummaryResponse,
   InstitutionStudentsBreakdownResponse,
+  InstitutionStatsResponse,
 } from "@/lib/types";
 
 interface Institution {
@@ -127,6 +128,8 @@ export default function InstitutionsPage() {
   const [institutionStudents, setInstitutionStudents] = useState<InstitutionStudentsResponse | null>(null);
   const [institutionSummary, setInstitutionSummary] = useState<InstitutionSummaryResponse | null>(null);
   const [institutionStudentsBreakdown, setInstitutionStudentsBreakdown] = useState<InstitutionStudentsBreakdownResponse | null>(null);
+  const [institutionStats, setInstitutionStats] = useState<InstitutionStatsResponse | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // Students pagination state
   const [studentsPage, setStudentsPage] = useState(1);
@@ -418,9 +421,10 @@ export default function InstitutionsPage() {
             setSelectedInstitution(institutionResponse.data);
 
             // Fetch additional institution data in parallel (excluding students)
-            const [summaryResponse, breakdownResponse] = await Promise.allSettled([
+            const [summaryResponse, breakdownResponse, statsResponse] = await Promise.allSettled([
               apiClient.getInstitutionSummary(institutionId),
               apiClient.getInstitutionStudentsBreakdown(institutionId),
+              apiClient.getInstitutionStats(institutionId),
             ]);
 
             // Handle summary data
@@ -431,6 +435,11 @@ export default function InstitutionsPage() {
             // Handle breakdown data
             if (breakdownResponse.status === "fulfilled" && breakdownResponse.value.success && breakdownResponse.value.data) {
               setInstitutionStudentsBreakdown(breakdownResponse.value.data!);
+            }
+
+            // Handle stats data
+            if (statsResponse.status === "fulfilled" && statsResponse.value.success && statsResponse.value.data) {
+              setInstitutionStats(statsResponse.value.data!);
             }
 
             // Fetch initial students data
@@ -587,8 +596,10 @@ export default function InstitutionsPage() {
     setInstitutionStudents(null);
     setInstitutionSummary(null);
     setInstitutionStudentsBreakdown(null);
+    setInstitutionStats(null);
     setStudentsPage(1);
     setStudentsLoading(false);
+    setStatsLoading(false);
     setViewMode("list");
   };
 
@@ -2314,6 +2325,195 @@ export default function InstitutionsPage() {
                         ) : (
                           <div className="flex items-center justify-center py-8">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        )}
+                      </AccordionSection>
+
+                      <AccordionSection title="Details" defaultOpen>
+                        {statsLoading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        ) : institutionStats ? (
+                          <div className="space-y-8">
+                            {/* Totals Overview */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-4">Institution Totals</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-blue-600">{institutionStats.totals.students}</div>
+                                  <div className="text-xs text-gray-600">Students</div>
+                                </div>
+                                <div className="text-center p-4 bg-green-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-green-600">{institutionStats.totals.quizzes}</div>
+                                  <div className="text-xs text-gray-600">Quizzes</div>
+                                </div>
+                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-yellow-600">{institutionStats.totals.exams}</div>
+                                  <div className="text-xs text-gray-600">Exams</div>
+                                </div>
+                                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                  <div className="text-2xl font-bold text-purple-600">{institutionStats.totals.projects}</div>
+                                  <div className="text-xs text-gray-600">Projects</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Class & Section Breakdown */}
+                            <div className="grid md:grid-cols-2 gap-6">
+                              {/* By Class */}
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-900 mb-3">Students by Class</h4>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {institutionStats.breakdown.byClass.map((classItem) => (
+                                    <div key={classItem.standardId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                      <span className="text-sm text-gray-900">{classItem.standardName}</span>
+                                      <Badge variant="secondary">{classItem._count._all} students</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* By Section */}
+                              <div>
+                                <h4 className="text-sm font-medium text-gray-900 mb-3">Students by Section</h4>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {institutionStats.breakdown.bySection.map((sectionItem) => (
+                                    <div key={sectionItem.sectionId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                      <span className="text-sm text-gray-900">{sectionItem.sectionName}</span>
+                                      <Badge variant="secondary">{sectionItem._count._all} students</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Grade Strength */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-3">Grade Strength</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {institutionStats.breakdown.gradesWithStrength.map((grade) => (
+                                  <div key={grade.standardId} className="text-center p-3 bg-gray-50 rounded-md">
+                                    <div className="text-lg font-bold text-gray-900">{grade.strength}</div>
+                                    <div className="text-xs text-gray-600">{grade.grade}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Section Strength */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-3">Section Strength</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                                {institutionStats.breakdown.sectionsWithStrength.map((section) => (
+                                  <div key={section.sectionId} className="text-center p-3 bg-gray-50 rounded-md">
+                                    <div className="text-lg font-bold text-gray-900">{section.strength}</div>
+                                    <div className="text-xs text-gray-600">{section.section} - {section.standardId.slice(-4)}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Assigned Content */}
+                            <div className="space-y-6">
+                              <h4 className="text-sm font-medium text-gray-900">Assigned Content</h4>
+
+                              {/* Exams by Subject */}
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-700 mb-3">Exams by Subject</h5>
+                                <div className="space-y-2 max-h-32 overflow-y-auto">
+                                  {institutionStats.assigned.exams.bySchoolSubject.slice(0, 10).map((subject) => (
+                                    <div key={subject.subject} className="flex justify-between items-center p-2 bg-blue-50 rounded-md">
+                                      <span className="text-sm text-gray-900 truncate mr-2">{subject.subject}</span>
+                                      <Badge variant="outline" className="bg-blue-100 text-blue-700">{subject.count}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Quizzes by Subject */}
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-700 mb-3">Quizzes by Subject</h5>
+                                <div className="space-y-2 max-h-32 overflow-y-auto">
+                                  {institutionStats.assigned.quizzes.bySchoolSubject.slice(0, 10).map((subject) => (
+                                    <div key={subject.subject} className="flex justify-between items-center p-2 bg-green-50 rounded-md">
+                                      <span className="text-sm text-gray-900 truncate mr-2">{subject.subject}</span>
+                                      <Badge variant="outline" className="bg-green-100 text-green-700">{subject.count}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Recent Student Performance */}
+                            <div className="space-y-6">
+                              <h4 className="text-sm font-medium text-gray-900">Recent Student Performance</h4>
+
+                              {/* Recent Exams */}
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-700 mb-3">Latest Exam Results</h5>
+                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                  {institutionStats.studentAnalytics.examsLast3.slice(0, 5).map((exam, index) => (
+                                    <div key={`${exam.studentId}-${exam.examId}-${index}`} className="flex justify-between items-center p-3 bg-yellow-50 rounded-md">
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-900">{exam.standardName} - {exam.sectionName}</div>
+                                        <div className="text-xs text-gray-600">Score: {exam.score !== null ? exam.score : 'N/A'}</div>
+                                      </div>
+                                      <Badge variant="outline" className="bg-yellow-100 text-yellow-700">Exam {exam.rn}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Recent Quizzes */}
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-700 mb-3">Latest Quiz Results</h5>
+                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                  {institutionStats.studentAnalytics.quizzesLast3.slice(0, 5).map((quiz, index) => (
+                                    <div key={`${quiz.studentId}-${index}`} className="flex justify-between items-center p-3 bg-purple-50 rounded-md">
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-900">{quiz.standardName} - {quiz.sectionName}</div>
+                                        <div className="text-xs text-gray-600">Score: {quiz.score}/{quiz.totalQuestions}</div>
+                                      </div>
+                                      <Badge variant="outline" className="bg-purple-100 text-purple-700">Quiz {quiz.rn}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Recent Projects */}
+                              <div>
+                                <h5 className="text-sm font-medium text-gray-700 mb-3">Latest Project Status</h5>
+                                <div className="space-y-2 max-h-40 overflow-y-auto">
+                                  {institutionStats.studentAnalytics.projectsLast3.slice(0, 5).map((project, index) => (
+                                    <div key={`${project.studentId}-${index}`} className="flex justify-between items-center p-3 bg-indigo-50 rounded-md">
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-900">{project.standardName} - {project.sectionName}</div>
+                                        <div className="text-xs text-gray-600">Status: {project.isCompleted ? 'Completed' : 'In Progress'}</div>
+                                      </div>
+                                      <Badge variant="outline" className="bg-indigo-100 text-indigo-700">Project {project.rn}</Badge>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Growth Analytics */}
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-3">Student Growth (Monthly)</h4>
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                {institutionStats.growth.studentsByMonth.map((month) => (
+                                  <div key={month.month} className="text-center p-3 bg-orange-50 rounded-md">
+                                    <div className="text-lg font-bold text-orange-600">{month.count}</div>
+                                    <div className="text-xs text-gray-600">{month.month}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center py-8">
+                            <div className="text-sm text-gray-500">No detailed statistics available</div>
                           </div>
                         )}
                       </AccordionSection>

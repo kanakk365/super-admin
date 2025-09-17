@@ -149,6 +149,164 @@ export interface InstitutionStudentsBreakdownResponse {
   }[];
 }
 
+export interface InstitutionListResponse {
+  data: Institution[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface InstitutionStatsResponse {
+  totals: {
+    students: number;
+    quizzes: number;
+    quizSubmissions: number;
+    exams: number;
+    completedExams: number;
+    projects: number;
+    completedProjects: number;
+  };
+  breakdown: {
+    byClass: {
+      _count: {
+        _all: number;
+      };
+      standardId: string;
+      standardName: string;
+    }[];
+    bySection: {
+      _count: {
+        _all: number;
+      };
+      sectionId: string;
+      sectionName: string;
+    }[];
+    gradesWithStrength: {
+      standardId: string;
+      grade: string;
+      strength: number;
+    }[];
+    sectionsWithStrength: {
+      sectionId: string;
+      section: string;
+      standardId: string;
+      strength: number;
+    }[];
+  };
+  assigned: {
+    exams: {
+      byClassSubject: {
+        standardId: string;
+        subject: string;
+        count: number;
+        standardName: string;
+      }[];
+      bySectionSubject: {
+        sectionId: string;
+        subject: string;
+        count: number;
+        sectionName: string;
+      }[];
+      bySchoolSubject: {
+        subject: string;
+        count: number;
+      }[];
+    };
+    quizzes: {
+      byClassSubject: {
+        standardId: string;
+        subject: string;
+        count: number;
+        standardName: string;
+      }[];
+      bySectionSubject: {
+        sectionId: string;
+        subject: string;
+        count: number;
+        sectionName: string;
+      }[];
+      bySchoolSubject: {
+        subject: string;
+        count: number;
+      }[];
+    };
+    projects: {
+      byClass: {
+        standardId: string;
+        count: number;
+        standardName: string;
+      }[];
+      bySection: {
+        sectionId: string;
+        count: number;
+        sectionName: string;
+      }[];
+    };
+  };
+  studentAnalytics: {
+    examsLast3: {
+      studentId: string;
+      standardId: string;
+      sectionId: string;
+      score: number | null;
+      examId: string;
+      rn: string;
+      standardName: string;
+      sectionName: string;
+    }[];
+    quizzesLast3: {
+      studentId: string;
+      standardId: string;
+      sectionId: string;
+      score: number;
+      totalQuestions: number;
+      rn: string;
+      standardName: string;
+      sectionName: string;
+    }[];
+    projectsLast3: {
+      studentId: string;
+      standardId: string;
+      sectionId: string;
+      isCompleted: boolean;
+      rn: string;
+      standardName: string;
+      sectionName: string;
+    }[];
+  };
+  classSectionAnalytics: {
+    exams: {
+      recentByClass: {
+        standardId: string;
+        examId: string;
+        avgscore: number | null;
+        attempts: number;
+        standardName: string;
+      }[];
+      recentBySection: {
+        sectionId: string;
+        examId: string;
+        avgscore: number | null;
+        attempts: number;
+        sectionName: string;
+      }[];
+    };
+    quizzes: {
+      recentByClass: unknown[];
+      recentBySection: unknown[];
+    };
+  };
+  growth: {
+    studentsByMonth: {
+      month: string;
+      count: number;
+    }[];
+  };
+}
+
 // Student Activity Types
 export interface StudentActivityResponse {
   student: {
@@ -427,6 +585,41 @@ export interface FileUpload {
   uploadedBy: string;
 }
 
+// Feature Types
+export interface Feature {
+  id: string;
+  key: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Institution Feature Assignment Types
+export interface InstitutionFeatureAssignment {
+  id: string;
+  institutionId: string;
+  featureId: string;
+  enabled: boolean;
+  createdAt: string;
+  updatedAt: string;
+  feature: Feature;
+}
+
+// Member Types
+export interface Member {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  roleName: string;
+  phone: string;
+  adminId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Export all types for easy importing
 export type {
   // Re-export commonly used types
@@ -437,4 +630,7 @@ export type {
   Student as StudentType,
   Blog as BlogType,
   Role as RoleType,
+  Member as MemberType,
+  Feature as FeatureType,
+  InstitutionFeatureAssignment as InstitutionFeatureAssignmentType,
 };

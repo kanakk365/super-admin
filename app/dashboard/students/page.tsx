@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Upload,
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
@@ -87,10 +88,19 @@ export default function StudentsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [createFormData, setCreateFormData] = useState({
-    email: "",
     firstName: "",
     lastName: "",
     password: "",
+    email: "",
+    institutionId: "",
+    standardId: "",
+    sectionId: "",
+    dob: "",
+    gender: "",
+    phone: "",
+    alternatePhone: "",
+    schoolMainId: "",
+    photo: null as File | null,
   });
 
   // Student activity data
@@ -262,9 +272,21 @@ export default function StudentsPage() {
     }
   };
 
+  // Handle file change
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setCreateFormData((prev) => ({ ...prev, photo: file }));
+  };
+
   // Handle create student
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!createFormData.firstName || !createFormData.lastName || !createFormData.email || !createFormData.password) {
+      setError("Please fill in all required fields");
+      return;
+    }
+
     setCreateLoading(true);
 
     try {
@@ -274,15 +296,33 @@ export default function StudentsPage() {
         return;
       }
 
+      // Create FormData for multipart/form-data (since we have file upload)
+      const formDataToSend = new FormData();
+      formDataToSend.append("firstName", createFormData.firstName);
+      formDataToSend.append("lastName", createFormData.lastName);
+      formDataToSend.append("password", createFormData.password);
+      formDataToSend.append("email", createFormData.email);
+      formDataToSend.append("institutionId", createFormData.institutionId);
+      formDataToSend.append("standardId", createFormData.standardId);
+      formDataToSend.append("sectionId", createFormData.sectionId);
+      formDataToSend.append("dob", createFormData.dob);
+      formDataToSend.append("gender", createFormData.gender);
+      formDataToSend.append("phone", createFormData.phone);
+      formDataToSend.append("alternatePhone", createFormData.alternatePhone || "");
+      formDataToSend.append("schoolMainId", createFormData.schoolMainId);
+
+      if (createFormData.photo) {
+        formDataToSend.append("photo", createFormData.photo);
+      }
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/super-admin/users/register`,
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(createFormData),
+          body: formDataToSend,
         },
       );
 
@@ -295,10 +335,19 @@ export default function StudentsPage() {
       if (data.success) {
         // Reset form and close dialog
         setCreateFormData({
-          email: "",
           firstName: "",
           lastName: "",
           password: "",
+          email: "",
+          institutionId: "",
+          standardId: "",
+          sectionId: "",
+          dob: "",
+          gender: "",
+          phone: "",
+          alternatePhone: "",
+          schoolMainId: "",
+          photo: null,
         });
         setShowCreateForm(false);
 
@@ -495,7 +544,7 @@ export default function StudentsPage() {
                     <Input
                       id="firstName"
                       name="firstName"
-                      placeholder="Enter first name"
+                      placeholder="Enter student's first name (e.g., John)"
                       value={createFormData.firstName}
                       onChange={handleCreateFormChange}
                       required
@@ -506,31 +555,6 @@ export default function StudentsPage() {
                     />
                   </div>
 
-                  
-
-                  {/* Email Address */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                      Email Address
-                    </Label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="Enter Email"
-                      value={createFormData.email}
-                      onChange={handleCreateFormChange}
-                      required
-                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
-                      style={{
-                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%) !important'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Right Column */}
-                <div className="space-y-4">
                   {/* Last Name */}
                   <div className="space-y-2">
                     <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
@@ -539,7 +563,7 @@ export default function StudentsPage() {
                     <Input
                       id="lastName"
                       name="lastName"
-                      placeholder="Enter last name"
+                      placeholder="Enter student's last name (e.g., Doe)"
                       value={createFormData.lastName}
                       onChange={handleCreateFormChange}
                       required
@@ -549,37 +573,228 @@ export default function StudentsPage() {
                       }}
                     />
                   </div>
+
                   {/* Password */}
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                       Password
                     </Label>
-                    <div className="relative">
-                      <Input
-                        id="password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Enter password"
-                        value={createFormData.password}
-                        onChange={handleCreateFormChange}
-                        className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400 pr-10"
+                    <Input
+                      id="password"
+                      name="password"
+                      placeholder="Create a secure password (min. 8 characters)"
+                      value={createFormData.password}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium text-gray-700">
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="student@example.com"
+                      value={createFormData.email}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Institution ID */}
+                  <div className="space-y-2">
+                    <Label htmlFor="institutionId" className="text-sm font-medium text-gray-700">
+                      Institution ID
+                    </Label>
+                    <Input
+                      id="institutionId"
+                      name="institutionId"
+                      placeholder="Institution UUID (e.g., cmcx8sm3y0000qe0r6xjq6imo)"
+                      value={createFormData.institutionId}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Standard ID */}
+                  <div className="space-y-2">
+                    <Label htmlFor="standardId" className="text-sm font-medium text-gray-700">
+                      Standard ID
+                    </Label>
+                    <Input
+                      id="standardId"
+                      name="standardId"
+                      placeholder="Standard/Grade UUID (e.g., cmen6mrcl0001qezajr3a8s84)"
+                      value={createFormData.standardId}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Section ID */}
+                  <div className="space-y-2">
+                    <Label htmlFor="sectionId" className="text-sm font-medium text-gray-700">
+                      Section ID
+                    </Label>
+                    <Input
+                      id="sectionId"
+                      name="sectionId"
+                      placeholder="Section UUID (e.g., cmen6s8eo0001qe3hgenplbnv)"
+                      value={createFormData.sectionId}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  {/* Date of Birth */}
+                  <div className="space-y-2">
+                    <Label htmlFor="dob" className="text-sm font-medium text-gray-700">
+                      Date of Birth
+                    </Label>
+                    <Input
+                      id="dob"
+                      name="dob"
+                      type="date"
+                      value={createFormData.dob}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Gender */}
+                  <div className="space-y-2">
+                    <Label htmlFor="gender" className="text-sm font-medium text-gray-700">
+                      Gender
+                    </Label>
+                    <Select
+                      value={createFormData.gender}
+                      onValueChange={(value) => setCreateFormData((prev) => ({ ...prev, gender: value }))}
+                      required
+                    >
+                      <SelectTrigger
+                        className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
                         style={{
                           background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
                         }}
-                        required
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
+                        <SelectValue placeholder="Select gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MALE">Male</SelectItem>
+                        <SelectItem value="FEMALE">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                      Phone
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      placeholder="Primary phone number (e.g., +919087654321)"
+                      value={createFormData.phone}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Alternate Phone */}
+                  <div className="space-y-2">
+                    <Label htmlFor="alternatePhone" className="text-sm font-medium text-gray-700">
+                      Alternate Phone
+                    </Label>
+                    <Input
+                      id="alternatePhone"
+                      name="alternatePhone"
+                      placeholder="Alternate phone number (optional)"
+                      value={createFormData.alternatePhone}
+                      onChange={handleCreateFormChange}
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* School Main ID */}
+                  <div className="space-y-2">
+                    <Label htmlFor="schoolMainId" className="text-sm font-medium text-gray-700">
+                      School Main ID
+                    </Label>
+                    <Input
+                      id="schoolMainId"
+                      name="schoolMainId"
+                      placeholder="School email address (e.g., contact@school.edu)"
+                      value={createFormData.schoolMainId}
+                      onChange={handleCreateFormChange}
+                      required
+                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                      style={{
+                        background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                      }}
+                    />
+                  </div>
+
+                  {/* Photo Upload */}
+                  <div className="space-y-2">
+                    <Label htmlFor="photo" className="text-sm font-medium text-gray-700">
+                      Photo
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="photo"
+                        name="photo"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="h-11 bg-brand-gradient-faint border-0 focus:border-orange-400 focus:ring-orange-400 pr-10"
+                        placeholder="Choose student photo (PNG, JPG, JPEG)"
+                      />
+                      <Upload className="absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                     </div>
+                    {createFormData.photo && (
+                      <p className="text-xs text-gray-500">
+                        Selected: {createFormData.photo.name}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

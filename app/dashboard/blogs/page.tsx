@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Search,
-  Calendar,
   Upload,
   X,
   User,
@@ -947,71 +946,54 @@ export default function BlogsPage() {
                     {/* Accordion sections */}
                     <div className="space-y-3">
                       <AccordionSection title="Overview" defaultOpen>
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <User className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Author</p>
-                                <p className="font-medium">
-                                  {selectedBlog.author}
-                                </p>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Title</div>
+                              <div className="font-medium text-gray-900">
+                                {selectedBlog.title}
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <Calendar className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Created</p>
-                                <p className="font-medium">
-                                  {formatDate(selectedBlog.createdAt)}
-                                </p>
-                              </div>
-                            </div>
-                            {selectedBlog.publishedDate && (
-                              <div className="flex items-center gap-3">
-                                <Calendar className="h-5 w-5 text-gray-400" />
-                                <div>
-                                  <p className="text-sm text-gray-600">
-                                    Published
-                                  </p>
-                                  <p className="font-medium">
-                                    {formatDate(selectedBlog.publishedDate)}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <div className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Status</span>
-                              <Badge
-                                variant={getStatusColor(selectedBlog.status)}
-                              >
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Status</div>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <span className={`inline-block h-2 w-2 rounded-full mr-2 ${
+                                  selectedBlog.status === "PUBLISHED"
+                                    ? "bg-green-500"
+                                    : selectedBlog.status === "ARCHIVED"
+                                    ? "bg-gray-400"
+                                    : "bg-yellow-500"
+                                }`}></span>
                                 {selectedBlog.status}
-                              </Badge>
+                              </div>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">
-                                Last Updated
-                              </span>
-                              <span>{formatDate(selectedBlog.updatedAt)}</span>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Published</div>
+                              <div className="font-medium text-gray-900">
+                              {formatDate(selectedBlog.createdAt)}
+                              </div>
                             </div>
-                            {selectedBlog.coverImageUrl && (
-                              <div className="flex justify-between">
-                                <span className="text-gray-600">
-                                  Cover Image
-                                </span>
-                                <span className="text-blue-600 hover:text-blue-800">
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Author</div>
+                              <div className="font-medium text-gray-900">{selectedBlog.author}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Cover Image</div>
+                              <div className="font-medium text-gray-900">
+                                {selectedBlog.coverImageUrl ? (
                                   <a
                                     href={selectedBlog.coverImageUrl}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800"
                                   >
                                     View Image
                                   </a>
-                                </span>
+                                ) : (
+                                  "-"
+                                )}
                               </div>
-                            )}
+                            </div>
                           </div>
                         </div>
                       </AccordionSection>
@@ -1024,22 +1006,6 @@ export default function BlogsPage() {
                         </div>
                       </AccordionSection>
 
-                      <AccordionSection title="Statistics">
-                        <div className="grid md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <div className="text-gray-600 mb-1">Word Count</div>
-                            <div>
-                              {selectedBlog.content.split(/\s+/).length} words
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-gray-600 mb-1">
-                              Character Count
-                            </div>
-                            <div>{selectedBlog.content.length} characters</div>
-                          </div>
-                        </div>
-                      </AccordionSection>
                     </div>
 
                     {/* Actions */}

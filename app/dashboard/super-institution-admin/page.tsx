@@ -35,7 +35,8 @@ import {
 } from "@/components/ui/table";
 
 import { apiClient, handleApiError } from "@/lib/api";
-import type { Institution } from "@/lib/types";
+import { getUserFromToken } from "@/lib/jwt-utils";
+import type { Institution, ApiResponse, InstitutionListResponse } from "@/lib/types";
 
 // Types
 interface InstitutionStats {
@@ -89,7 +90,18 @@ export default function SuperInstitutionAdminPage() {
     try {
       setLoading(true);
 
-      const response = await apiClient.getSuperInstitutionAdminsInstitutions(currentPage, itemsPerPage);
+      const user = getUserFromToken();
+      let response: ApiResponse<InstitutionListResponse>;
+
+      if (user?.role === "SUPERADMIN") {
+        response = await apiClient.getSuperInstitutionAdminsInstitutions(currentPage, itemsPerPage);
+      } else {
+        // Default to SUPER_INSTITUTION_ADMIN behavior
+        response = await apiClient.getSuperInstitutionAdminsInstitutions(
+          currentPage,
+          itemsPerPage,
+        );
+      }
 
       if (response.success && response.data) {
         setInstitutions(response.data.data || []);

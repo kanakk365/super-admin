@@ -148,21 +148,50 @@ export default function Dashboard() {
       setLoading(true);
       setError(null);
 
-      // Fetch dashboard statistics with proper endpoints
-      const [institutionsRes, studentsRes, blogsRes] = await Promise.allSettled(
-        [
-          apiClient.get("/super-admin/institution"),
-          apiClient.get("/super-admin/users"),
-          apiClient.get("/super-admin/blogs"),
-        ]
-      );
+      // Fetch all users across pages for accurate charting
+      const fetchAllUsers = async () => {
+        const pageSize = 100;
+        const firstPage = await apiClient.get<{
+          data?: {
+            users?: { createdAt?: string }[];
+            pagination?: { totalPages?: number };
+          };
+        }>(`/super-admin/users?page=1&limit=${pageSize}`);
 
-      // Get actual student count from users API and process for chart
-      const studentData =
-        studentsRes.status === "fulfilled"
-          ? (studentsRes.value as { data?: { createdAt?: string }[] })
-          : null;
-      const users = studentData?.data || [];
+        const aggregatedUsers: { createdAt?: string }[] =
+          firstPage?.data?.users || [];
+        const totalPages = firstPage?.data?.pagination?.totalPages || 1;
+
+        if (totalPages > 1) {
+          const remainingPageNumbers = Array.from(
+            { length: totalPages - 1 },
+            (_, idx) => idx + 2,
+          );
+          const remainingPages = await Promise.all(
+            remainingPageNumbers.map((p) =>
+              apiClient.get<{
+                data?: { users?: { createdAt?: string }[] };
+              }>(`/super-admin/users?page=${p}&limit=${pageSize}`),
+            ),
+          );
+          for (const page of remainingPages) {
+            aggregatedUsers.push(...(page?.data?.users || []));
+          }
+        }
+
+        return aggregatedUsers;
+      };
+
+      // Run users fetch in parallel with other endpoints
+      const usersPromise = fetchAllUsers();
+
+      // Fetch institutions and blogs with resilience
+      const [institutionsRes, blogsRes] = await Promise.allSettled([
+        apiClient.get("/super-admin/institution"),
+        apiClient.get("/super-admin/blogs"),
+      ]);
+
+      const users = await usersPromise.catch(() => [] as { createdAt?: string }[]);
       const studentCount = users.length;
 
       // Process user data for monthly bar chart

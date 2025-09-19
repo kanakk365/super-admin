@@ -85,7 +85,7 @@ export interface Institution {
   pocName: string | null;
   affiliatedBoard: string;
   email: string;
-  password: string;
+  password: string | null;
   phone: string;
   website: string;
   yearOfEstablishment: string;

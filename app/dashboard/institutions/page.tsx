@@ -47,6 +47,7 @@ import type {
   InstitutionSummaryResponse,
   InstitutionStudentsBreakdownResponse,
   InstitutionStatsResponse,
+  InstitutionFeatureAssignment,
 } from "@/lib/types";
 
 interface Institution {
@@ -56,7 +57,7 @@ interface Institution {
   pocName: string | null;
   affiliatedBoard: string;
   email: string;
-  password: string;
+  password: string | null;
   phone: string;
   website: string;
   yearOfEstablishment: string;
@@ -130,6 +131,7 @@ export default function InstitutionsPage() {
   const [institutionStudentsBreakdown, setInstitutionStudentsBreakdown] = useState<InstitutionStudentsBreakdownResponse | null>(null);
   const [institutionStats, setInstitutionStats] = useState<InstitutionStatsResponse | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [institutionFeatures, setInstitutionFeatures] = useState<InstitutionFeatureAssignment[] | null>(null);
 
   // Students pagination state
   const [studentsPage, setStudentsPage] = useState(1);
@@ -420,11 +422,12 @@ export default function InstitutionsPage() {
           if (institutionResponse.success && institutionResponse.data) {
             setSelectedInstitution(institutionResponse.data);
 
-            // Fetch additional institution data in parallel (excluding students)
-            const [summaryResponse, breakdownResponse, statsResponse] = await Promise.allSettled([
+            // Fetch additional institution data in parallel
+            const [summaryResponse, breakdownResponse, statsResponse, featuresResponse] = await Promise.allSettled([
               apiClient.getInstitutionSummary(institutionId),
               apiClient.getInstitutionStudentsBreakdown(institutionId),
               apiClient.getInstitutionStats(institutionId),
+              apiClient.getInstitutionFeatures(institutionId),
             ]);
 
             // Handle summary data
@@ -440,6 +443,13 @@ export default function InstitutionsPage() {
             // Handle stats data
             if (statsResponse.status === "fulfilled" && statsResponse.value.success && statsResponse.value.data) {
               setInstitutionStats(statsResponse.value.data!);
+            }
+
+            // Handle features data
+            if (featuresResponse.status === "fulfilled" && featuresResponse.value.success && featuresResponse.value.data) {
+              setInstitutionFeatures(featuresResponse.value.data!);
+            } else {
+              setInstitutionFeatures([]);
             }
 
             // Fetch initial students data
@@ -1629,9 +1639,6 @@ export default function InstitutionsPage() {
                                 <TableHead className="text-white min-w-[100px] px-4">
                                   Status
                                 </TableHead>
-                                <TableHead className="text-white min-w-[120px] px-4">
-                                  Students
-                                </TableHead>
                                 <TableHead className="text-white min-w-[100px] px-4">
                                   Established
                                 </TableHead>
@@ -1713,15 +1720,7 @@ export default function InstitutionsPage() {
                                     </Badge>
                                   </TableCell>
 
-                                  {/* Students Column */}
-                                  <TableCell className="px-4">
-                                    <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                      <Users className="h-4 w-4 flex-shrink-0" />
-                                      <span>
-                                        {institution.totalStudentStrength.toLocaleString()}
-                                      </span>
-                                    </div>
-                                  </TableCell>
+                                  
 
                                   {/* Established Column */}
                                   <TableCell className="px-4">
@@ -2057,7 +2056,42 @@ export default function InstitutionsPage() {
                       </AccordionSection>
 
                       <AccordionSection title="Assigned Features">
-                        <p className="text-sm text-gray-600">Coming soon</p>
+                        {institutionFeatures ? (
+                          institutionFeatures.length > 0 ? (
+                            <div className="rounded-lg border overflow-hidden">
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-gray-50">
+                                      <TableHead className="text-xs">Feature</TableHead>
+                                      <TableHead className="text-xs">Description</TableHead>
+                                      <TableHead className="text-xs text-right">Enabled</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {institutionFeatures.map((assignment) => (
+                                      <TableRow key={assignment.id}>
+                                        <TableCell className="text-sm">{assignment.feature.name}</TableCell>
+                                        <TableCell className="text-sm text-gray-600">{assignment.feature.description}</TableCell>
+                                        <TableCell className="text-sm text-right">
+                                          <Badge className={assignment.enabled ? "bg-green-100 text-green-700 border border-green-400" : "bg-gray-100 text-gray-700 border"}>
+                                            {assignment.enabled ? "Yes" : "No"}
+                                          </Badge>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-600">No features assigned.</div>
+                          )
+                        ) : (
+                          <div className="flex items-center justify-center py-6">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                          </div>
+                        )}
                       </AccordionSection>
 
                       <AccordionSection title="Admin Users">

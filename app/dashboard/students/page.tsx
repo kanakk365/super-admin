@@ -13,8 +13,6 @@ import {
   Mail,
   X,
   ArrowLeft,
-  Eye,
-  EyeOff,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -37,7 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { handleApiError, apiClient } from "@/lib/api";
-import type { StudentActivityResponse } from "@/lib/types";
+import type { StudentActivityResponse, Institution, InstitutionStatsResponse } from "@/lib/types";
 
 interface Student {
   id: string;
@@ -48,13 +46,26 @@ interface Student {
   updatedAt?: string;
   isActive: boolean;
   isVerified: boolean;
+  institution?: { id: string; name: string; type?: string } | null;
+  standard?: { id: string; name: string } | null;
+  section?: { id: string; name: string } | null;
 }
 
 interface StudentsResponse {
   statusCode: number;
   success: boolean;
   message: string;
-  data: Student[];
+  data: {
+    users: Student[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalCount: number;
+      limit: number;
+      hasNextPage: boolean;
+      hasPrevPage: boolean;
+    };
+  };
 }
 
 interface StudentStats {
@@ -73,7 +84,36 @@ export default function StudentsPage() {
 
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  function AccordionSection({
+    title,
+    children,
+    defaultOpen = false,
+  }: {
+    title: string;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+  }) {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+      <div className="rounded-lg border bg-white">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left"
+        >
+          <span className="font-medium text-sm sm:text-base text-gray-900">
+            {title}
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 text-gray-500 transition-transform ${
+              open ? "rotate-180" : "rotate-0"
+            }`}
+          />
+        </button>
+        {open && <div className="px-4 sm:px-6 pb-5">{children}</div>}
+      </div>
+    );
+  }
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "detail">("list");
   const [statusFilter, setStatusFilter] = useState<"ALL" | "ACTIVE" | "INACTIVE">("ALL");
@@ -87,6 +127,16 @@ export default function StudentsPage() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [serverTotalPages, setServerTotalPages] = useState(1);
+  const [serverTotalCount, setServerTotalCount] = useState(0);
+
+  // Cascading filter state
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState("");
+  const [standards, setStandards] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedStandardId, setSelectedStandardId] = useState("");
+  const [sections, setSections] = useState<Array<{ id: string; name: string; standardId?: string }>>([]);
+  const [selectedSectionId, setSelectedSectionId] = useState("");
   const [createFormData, setCreateFormData] = useState({
     firstName: "",
     lastName: "",
@@ -128,33 +178,29 @@ export default function StudentsPage() {
       setLoading(true);
       setError("");
 
-      const token = localStorage.getItem("authToken");
+      const params = new URLSearchParams();
+      params.set("page", String(currentPage));
+      params.set("limit", String(itemsPerPage));
+      if (selectedInstitutionId) params.set("institutionId", selectedInstitutionId);
+      if (selectedStandardId) params.set("standardId", selectedStandardId);
+      if (selectedSectionId) params.set("sectionId", selectedSectionId);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}/super-admin/users`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const data: StudentsResponse = await response.json();
+      const data = await apiClient.get<StudentsResponse>(`/super-admin/users?${params.toString()}`);
 
       if (data.success) {
-        setStudents(data.data);
+        const list = data.data?.users || [];
+        setStudents(list);
+        const pagination = data.data?.pagination;
+        if (pagination) {
+          setServerTotalPages(pagination.totalPages || 1);
+          setServerTotalCount(pagination.totalCount || list.length);
+        }
 
         // Calculate stats
-        const total = data.data.length;
-        const active = data.data.filter((student) => student.isActive).length;
-        const inactive = data.data.filter((student) => !student.isActive).length;
-        const verified = data.data.filter((student) => student.isVerified).length;
+        const total = list.length;
+        const active = list.filter((student) => student.isActive).length;
+        const inactive = list.filter((student) => !student.isActive).length;
+        const verified = list.filter((student) => student.isVerified).length;
 
         setStats({ total, active, inactive, verified });
       } else {
@@ -166,9 +212,47 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [checkAuth]);
+  }, [checkAuth, currentPage, itemsPerPage, selectedInstitutionId, selectedStandardId, selectedSectionId]);
 
-  // Filter students based on search term and status
+  // Load institutions for filter options
+  const loadInstitutions = useCallback(async () => {
+    try {
+      const res = await apiClient.getAllInstitutions(1, 200);
+      if (res.success && res.data) {
+        setInstitutions(res.data.data || []);
+      }
+    } catch (e) {
+      console.error("Failed to load institutions", e);
+    }
+  }, []);
+
+  // Load standards and sections for selected institution
+  const loadInstitutionMeta = useCallback(async (institutionId: string) => {
+    if (!institutionId) {
+      setStandards([]);
+      setSections([]);
+      return;
+    }
+    try {
+      const res = await apiClient.getInstitutionStats(institutionId);
+      if (res.success && res.data) {
+        const data: InstitutionStatsResponse = res.data;
+        const byClass = data.breakdown?.byClass || [];
+        const grades = byClass.map((c) => ({ id: c.standardId, name: c.standardName }));
+        setStandards(grades);
+
+        const sectionsWithStrength = data.breakdown?.sectionsWithStrength || [];
+        const secs = sectionsWithStrength.map((s) => ({ id: s.sectionId, name: s.section, standardId: s.standardId }));
+        setSections(secs);
+      }
+    } catch (e) {
+      console.error("Failed to load institution meta", e);
+      setStandards([]);
+      setSections([]);
+    }
+  }, []);
+
+  // Filter students (client-side) based on search term and status on current page data
   const filteredStudents = students.filter((student) => {
     const matchesSearch =
       student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -183,16 +267,14 @@ export default function StudentsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Pagination logic
-  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
+  // Server-side pagination; we show current page from API
+  const totalPages = serverTotalPages;
+  const paginatedStudents = filteredStudents;
 
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, itemsPerPage]);
+  }, [searchTerm, statusFilter, itemsPerPage, selectedInstitutionId, selectedStandardId, selectedSectionId]);
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -388,40 +470,24 @@ export default function StudentsPage() {
   useEffect(() => {
     // Check auth first, then fetch students
     if (checkAuth()) {
+      loadInstitutions();
       fetchStudents();
     }
-  }, [checkAuth, fetchStudents]);
+  }, [checkAuth, fetchStudents, loadInstitutions]);
 
-  function AccordionSection({
-    title,
-    children,
-    defaultOpen = false,
-  }: {
-    title: string;
-    children: React.ReactNode;
-    defaultOpen?: boolean;
-  }) {
-    const [open, setOpen] = useState(defaultOpen);
-    return (
-      <div className="rounded-lg border bg-white">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left"
-        >
-          <span className="font-medium text-sm sm:text-base text-gray-900">
-            {title}
-          </span>
-          <ChevronDown
-            className={`h-4 w-4 text-gray-500 transition-transform ${
-              open ? "rotate-180" : "rotate-0"
-            }`}
-          />
-        </button>
-        {open && <div className="px-4 sm:px-6 pb-5">{children}</div>}
-      </div>
-    );
-  }
+  // When institution changes, load its standards and sections and reset dependent selections
+  useEffect(() => {
+    setSelectedStandardId("");
+    setSelectedSectionId("");
+    if (selectedInstitutionId) {
+      loadInstitutionMeta(selectedInstitutionId);
+    } else {
+      setStandards([]);
+      setSections([]);
+    }
+  }, [selectedInstitutionId, loadInstitutionMeta]);
+
+  
 
   return (
     <div className="p-6 space-y-6 min-h-[calc(100vh-125px)]">
@@ -500,6 +566,50 @@ export default function StudentsPage() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+              </div>
+            )}
+            {!showCreateForm && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full sm:w-auto">
+                <Select value={selectedInstitutionId} onValueChange={(v) => setSelectedInstitutionId(v)}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select institution" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {institutions.map((inst) => (
+                      <SelectItem key={inst.id} value={inst.id}>{inst.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={selectedStandardId}
+                  onValueChange={(v) => setSelectedStandardId(v)}
+                  disabled={!selectedInstitutionId || standards.length === 0}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {standards.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={selectedSectionId}
+                  onValueChange={(v) => setSelectedSectionId(v)}
+                  disabled={!selectedStandardId}
+                >
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select section" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sections
+                      .filter((s) => !selectedStandardId || s.standardId === selectedStandardId)
+                      .map((s) => (
+                        <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
             <Button
@@ -1003,7 +1113,7 @@ export default function StudentsPage() {
                                 <SelectItem value="100">100</SelectItem>
                               </SelectContent>
                             </Select>
-                            <span className="text-sm text-muted-foreground">of {filteredStudents.length} students</span>
+                            <span className="text-sm text-muted-foreground">of {serverTotalCount} students</span>
                           </div>
 
                           {/* Page navigation */}
@@ -1031,10 +1141,11 @@ export default function StudentsPage() {
                                   } else {
                                     pageNumber = currentPage - 2 + i;
                                   }
-
+                                  // Ensure pageNumber stays within bounds
+                                  pageNumber = Math.max(1, Math.min(totalPages, pageNumber));
                                   return (
                                     <Button
-                                      key={pageNumber}
+                                      key={`${pageNumber}-${i}`}
                                       variant={currentPage === pageNumber ? "default" : "outline"}
                                       size="sm"
                                       onClick={() => handlePageChange(pageNumber)}
@@ -1108,6 +1219,7 @@ export default function StudentsPage() {
                     {/* Accordion sections */}
                     <div className="space-y-3">
                       <AccordionSection title="Overview" defaultOpen>
+                        <div className="space-y-3">
                         <div className="grid md:grid-cols-2 gap-6">
                           <div className="space-y-3">
                             <div className="flex items-center gap-3">
@@ -1125,115 +1237,161 @@ export default function StudentsPage() {
                             <div className="flex justify-between"><span className="text-gray-600">Email Verified</span><Badge className={`${selectedStudent.isVerified ? "bg-transparent text-orange-600 border border-orange-400" : "bg-gray-200 text-gray-600"}`}>{selectedStudent.isVerified ? "Verified" : "Unverified"}</Badge></div>
                           </div>
                         </div>
+                        </div>
                       </AccordionSection>
 
-                      <AccordionSection title="Activity">
-                        {studentActivity ? (
-                          <div className="space-y-6">
-                            {/* Student Info */}
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                              <h4 className="text-sm font-medium text-gray-900 mb-2">Student Information</h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-                                <div><span className="font-medium">Name:</span> {studentActivity.student.name}</div>
-                                <div><span className="font-medium">Email:</span> {studentActivity.student.email}</div>
+                      <AccordionSection title="Exams">
+                        <div>
+                          {activityLoading && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 py-8">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                              Loading exams...
+                            </div>
+                          )}
+                          {!activityLoading && studentActivity && studentActivity.exams.length === 0 && (
+                            <div className="text-center py-8 text-gray-500">No exams assigned.</div>
+                          )}
+                          {!activityLoading && studentActivity && studentActivity.exams.length > 0 && (
+                            <div className="rounded-lg border overflow-hidden">
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-brand-gradient text-white">
+                                      <TableHead className="text-white min-w-[220px] px-4">Title</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Topic</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Difficulty</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Time</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Status</TableHead>
+                                      <TableHead className="text-white min-w-[140px] px-4">Assigned</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {studentActivity.exams.map((examData) => (
+                                      <TableRow key={examData.id} className="hover:bg-gray-50">
+                                        <TableCell className="px-4">{examData.exam.title}</TableCell>
+                                        <TableCell className="px-4">{examData.exam.topic}</TableCell>
+                                        <TableCell className="px-4">{examData.exam.difficulty}</TableCell>
+                                        <TableCell className="px-4">{examData.exam.timeLimitMinutes} min</TableCell>
+                                        <TableCell className="px-4">
+                                          <Badge className={examData.completed ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                                            {examData.completed ? "Completed" : "Pending"}
+                                          </Badge>
+                                        </TableCell>
+                                        <TableCell className="px-4 text-sm text-gray-600">{formatDate(examData.createdAt)}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
                               </div>
                             </div>
-
-                            {/* Activity Summary */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-4">Activity Summary</h4>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-blue-600">{studentActivity.totals.examsAssigned}</div>
-                                  <div className="text-xs text-gray-600">Exams Assigned</div>
-                                </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-green-600">{studentActivity.totals.examsCompleted}</div>
-                                  <div className="text-xs text-gray-600">Exams Completed</div>
-                                </div>
-                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-yellow-600">{studentActivity.totals.quizSubmissions}</div>
-                                  <div className="text-xs text-gray-600">Quiz Submissions</div>
-                                </div>
-                                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-purple-600">{studentActivity.totals.projectsAssigned}</div>
-                                  <div className="text-xs text-gray-600">Projects Assigned</div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Exams List */}
-                            {studentActivity.exams.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-900 mb-4">Assigned Exams ({studentActivity.exams.length})</h4>
-                                <div className="space-y-3">
-                                  {studentActivity.exams.slice(0, 10).map((examData) => (
-                                    <div key={examData.id} className="border rounded-lg p-4 bg-white">
-                                      <div className="flex justify-between items-start mb-2">
-                                        <h5 className="font-medium text-gray-900">{examData.exam.title}</h5>
-                                        <Badge className={examData.completed ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
-                                          {examData.completed ? "Completed" : "Pending"}
-                                        </Badge>
-                                      </div>
-                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600 mb-2">
-                                        <div><span className="font-medium">Topic:</span> {examData.exam.topic}</div>
-                                        <div><span className="font-medium">Difficulty:</span> {examData.exam.difficulty}</div>
-                                        <div><span className="font-medium">Time Limit:</span> {examData.exam.timeLimitMinutes}min</div>
-                                      </div>
-                                      {examData.score !== null && (
-                                        <div className="text-sm">
-                                          <span className="font-medium">Score:</span> {examData.score}
-                                        </div>
-                                      )}
-                                      <div className="text-xs text-gray-500 mt-2">
-                                        Assigned: {formatDate(examData.createdAt)}
-                                      </div>
-                                    </div>
-                                  ))}
-                                  {studentActivity.exams.length > 10 && (
-                                    <div className="text-center text-sm text-gray-500">
-                                      And {studentActivity.exams.length - 10} more exams...
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Empty States */}
-                            {studentActivity.exams.length === 0 && studentActivity.quizzes.length === 0 &&
-                             studentActivity.projects.length === 0 && (
-                              <div className="text-center py-8 text-gray-500">
-                                <p>No activities found for this student.</p>
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-center py-8">
-                            {activityLoading ? (
-                              <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                                Loading activity data...
-                              </div>
-                            ) : (
-                              <p className="text-gray-500">No activity data available.</p>
-                            )}
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </AccordionSection>
 
-                      <AccordionSection title="Courses">
-                        <p className="text-sm text-gray-600">Coming soon</p>
+                      <AccordionSection title="Quizzes">
+                        <div>
+                          {activityLoading && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 py-8">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                              Loading quizzes...
+                            </div>
+                          )}
+                          {!activityLoading && studentActivity && (studentActivity.quizzes as unknown[]).length === 0 && (
+                            <div className="text-center py-8 text-gray-500">No quizzes available.</div>
+                          )}
+                          {!activityLoading && studentActivity && (studentActivity.quizzes as unknown[]).length > 0 && (
+                            <div className="rounded-lg border overflow-hidden">
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-brand-gradient text-white">
+                                      <TableHead className="text-white min-w-[220px] px-4">Title</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Topic</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Score</TableHead>
+                                      <TableHead className="text-white min-w-[140px] px-4">Assigned</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {/* Data shape TBD; rendering will be implemented when backend is ready */}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </AccordionSection>
+
+                      <AccordionSection title="Projects">
+                        <div>
+                          {activityLoading && (
+                            <div className="flex items-center justify-center gap-2 text-sm text-gray-600 py-8">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                              Loading projects...
+                            </div>
+                          )}
+                          {!activityLoading && studentActivity && (studentActivity.projects as unknown[]).length === 0 && (
+                            <div className="text-center py-8 text-gray-500">No projects available.</div>
+                          )}
+                          {!activityLoading && studentActivity && (studentActivity.projects as unknown[]).length > 0 && (
+                            <div className="rounded-lg border overflow-hidden">
+                              <div className="overflow-x-auto">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="bg-brand-gradient text-white">
+                                      <TableHead className="text-white min-w-[220px] px-4">Title</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Type</TableHead>
+                                      <TableHead className="text-white min-w-[120px] px-4">Status</TableHead>
+                                      <TableHead className="text-white min-w-[140px] px-4">Assigned</TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody>
+                                    {/* Data shape TBD; rendering will be implemented when backend is ready */}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </AccordionSection>
+
+                      <AccordionSection title="Progress">
+                        <div className="text-sm text-gray-500 py-6">Coming soon</div>
                       </AccordionSection>
 
                       <AccordionSection title="Analytics summary">
-                        <div className="grid md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <div className="text-gray-600 mb-1">Created</div>
-                            <div>{formatDate(selectedStudent.createdAt)}</div>
-                          </div>
-                          <div>
-                            <div className="text-gray-600 mb-1">Last Updated</div>
-                            <div>{selectedStudent.updatedAt ? formatDate(selectedStudent.updatedAt) : "N/A"}</div>
+                        <div className="space-y-6">
+                          {studentActivity ? (
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                                <div className="text-2xl font-bold text-blue-600">{studentActivity.totals.examsAssigned}</div>
+                                <div className="text-xs text-gray-600">Exams Assigned</div>
+                              </div>
+                              <div className="text-center p-4 bg-green-50 rounded-lg">
+                                <div className="text-2xl font-bold text-green-600">{studentActivity.totals.examsCompleted}</div>
+                                <div className="text-xs text-gray-600">Exams Completed</div>
+                              </div>
+                              <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                                <div className="text-2xl font-bold text-yellow-600">{studentActivity.totals.quizSubmissions}</div>
+                                <div className="text-xs text-gray-600">Quizzes</div>
+                              </div>
+                              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                                <div className="text-2xl font-bold text-purple-600">{studentActivity.totals.projectsAssigned}</div>
+                                <div className="text-xs text-gray-600">Projects</div>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm text-gray-500">No analytics available.</div>
+                          )}
+
+                          <div className="grid md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <div className="text-gray-600 mb-1">Created</div>
+                              <div>{formatDate(selectedStudent.createdAt)}</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-600 mb-1">Last Updated</div>
+                              <div>{selectedStudent.updatedAt ? formatDate(selectedStudent.updatedAt) : "N/A"}</div>
+                            </div>
                           </div>
                         </div>
                       </AccordionSection>

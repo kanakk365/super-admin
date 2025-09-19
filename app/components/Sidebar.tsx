@@ -76,6 +76,7 @@ const navigation = [
   { name: "Students", href: "/dashboard/students", iconName: "students" },
   { name: "Blogs", href: "/dashboard/blogs", iconName: "blogs" },
   { name: "Roles", href: "/dashboard/roles", iconName: "roles" },
+  { name: "Assign Features", href: "/dashboard/assignfeatures", iconName: "assign-features" },
 ];
 
 const profileNavigation = [

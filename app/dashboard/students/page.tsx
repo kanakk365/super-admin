@@ -1010,9 +1010,7 @@ export default function StudentsPage() {
                                 <TableHead className="text-white min-w-[100px] px-4">
                                   Status
                                 </TableHead>
-                                <TableHead className="text-white min-w-[100px] px-4">
-                                  Verification
-                                </TableHead>
+                                
                                 <TableHead className="text-white text-right min-w-[100px] px-4">
                                   Actions
                                 </TableHead>
@@ -1056,20 +1054,7 @@ export default function StudentsPage() {
                                     </Badge>
                                   </TableCell>
 
-                                  {/* Verification Column */}
-                                  <TableCell className="px-4">
-                                    <Badge
-                                      className={`${
-                                        student.isVerified
-                                          ? "bg-transparent text-orange-600 border border-orange-400"
-                                          : "bg-gray-200 text-gray-600"
-                                      }`}
-                                    >
-                                      {student.isVerified
-                                        ? "Verified"
-                                        : "Unverified"}
-                                    </Badge>
-                                  </TableCell>
+                                  
 
                                   {/* Actions Column */}
                                   <TableCell className="text-right px-4">
@@ -1219,24 +1204,41 @@ export default function StudentsPage() {
                     {/* Accordion sections */}
                     <div className="space-y-3">
                       <AccordionSection title="Overview" defaultOpen>
-                        <div className="space-y-3">
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <Mail className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Email</p>
-                                <p className="font-medium">{selectedStudent.email}</p>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Full Name</div>
+                              <div className="font-medium text-gray-900">
+                                {selectedStudent.firstName} {selectedStudent.lastName}
                               </div>
                             </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Grade / Section</div>
+                              <div className="font-medium text-gray-900">
+                                {(selectedStudent.standard?.name || "-")}
+                                {selectedStudent.section?.name ? `-${selectedStudent.section?.name}` : ""}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Status</div>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <span className={`inline-block h-2 w-2 rounded-full mr-2 ${selectedStudent.isActive ? "bg-green-500" : "bg-gray-400"}`}></span>
+                                {selectedStudent.isActive ? "Active" : "Inactive"}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Email</div>
+                              <div className="font-medium text-gray-900 break-all">{selectedStudent.email}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Institution</div>
+                              <div className="font-medium text-gray-900">{selectedStudent.institution?.name || "-"}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Date Added</div>
+                              <div className="font-medium text-gray-900">{formatDate(selectedStudent.createdAt)}</div>
+                            </div>
                           </div>
-                          <div className="space-y-3 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-600">First Name</span><span>{selectedStudent.firstName}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Last Name</span><span>{selectedStudent.lastName}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Status</span><Badge className={`${selectedStudent.isActive ? "bg-transparent text-orange-600 border border-orange-400" : "bg-gray-200 text-gray-600"}`}>{selectedStudent.isActive ? "Active" : "Inactive"}</Badge></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Email Verified</span><Badge className={`${selectedStudent.isVerified ? "bg-transparent text-orange-600 border border-orange-400" : "bg-gray-200 text-gray-600"}`}>{selectedStudent.isVerified ? "Verified" : "Unverified"}</Badge></div>
-                          </div>
-                        </div>
                         </div>
                       </AccordionSection>
 

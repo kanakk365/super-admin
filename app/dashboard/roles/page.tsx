@@ -6,13 +6,10 @@ import {
   Plus,
   X,
   Shield,
-  UserCheck,
   ArrowLeft,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Mail,
-  Phone,
 } from "lucide-react";
 import { handleApiError, apiClient } from "@/lib/api";
 import type { Member } from "@/lib/types";
@@ -269,14 +266,7 @@ export default function RolesPage() {
     setViewMode("list");
   };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
+  
 
   function AccordionSection({
     title,
@@ -805,36 +795,24 @@ export default function RolesPage() {
                     {/* Accordion sections */}
                     <div className="space-y-3">
                       <AccordionSection title="Member Information" defaultOpen>
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <UserCheck className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Full Name</p>
-                                <p className="font-medium">{selectedMember.firstName} {selectedMember.lastName}</p>
-                              </div>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Full Name</div>
+                              <div className="font-medium text-gray-900">{selectedMember.firstName} {selectedMember.lastName}</div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <Mail className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Email</p>
-                                <p className="font-medium">{selectedMember.email}</p>
-                              </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Role</div>
+                              <div className="font-medium text-gray-900">{selectedMember.roleName}</div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <Phone className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Phone</p>
-                                <p className="font-medium">{selectedMember.phone}</p>
-                              </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Email</div>
+                              <div className="font-medium text-gray-900 break-all">{selectedMember.email}</div>
                             </div>
-                          </div>
-                          <div className="space-y-3 text-sm">
-                            <div className="flex justify-between"><span className="text-gray-600">Role</span><Badge variant="outline">{selectedMember.roleName}</Badge></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Member ID</span><span className="font-mono text-xs">{selectedMember.id}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Admin ID</span><span className="font-mono text-xs">{selectedMember.adminId}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Created</span><span>{formatDate(selectedMember.createdAt)}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-600">Updated</span><span>{formatDate(selectedMember.updatedAt)}</span></div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Phone</div>
+                              <div className="font-medium text-gray-900">{selectedMember.phone || "-"}</div>
+                            </div>
                           </div>
                         </div>
                       </AccordionSection>

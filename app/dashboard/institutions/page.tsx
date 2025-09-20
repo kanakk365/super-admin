@@ -1921,135 +1921,64 @@ export default function InstitutionsPage() {
                     {/* Accordion sections */}
                     <div className="space-y-3">
                       <AccordionSection title="Overview" defaultOpen>
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <Mail className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Email</p>
-                                <p className="font-medium">
-                                  {selectedInstitution.email}
-                                </p>
-                              </div>
+                        <div className="space-y-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Institution</div>
+                              <div className="font-medium text-gray-900">{selectedInstitution.name}</div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <Phone className="h-5 w-5 text-gray-400" />
-                              <div>
-                                <p className="text-sm text-gray-600">Phone</p>
-                                <p className="font-medium">
-                                  {selectedInstitution.phone}
-                                </p>
-                              </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Type</div>
+                              <div className="font-medium text-gray-900">{selectedInstitution.type}</div>
                             </div>
-                            {selectedInstitution.website && (
-                              <div className="flex items-center gap-3">
-                                <Globe className="h-5 w-5 text-gray-400" />
-                                <div>
-                                  <p className="text-sm text-gray-600">
-                                    Website
-                                  </p>
-                                  <a
-                                    href={selectedInstitution.website}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                                  >
-                                    {selectedInstitution.website}
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                </div>
-                              </div>
-                            )}
-                            {selectedInstitution.pocName && (
-                              <div className="flex items-center gap-3">
-                                <Users className="h-5 w-5 text-gray-400" />
-                                <div>
-                                  <p className="text-sm text-gray-600">POC Name</p>
-                                  <p className="font-medium">
-                                    {selectedInstitution.pocName}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                            {selectedInstitution.address && (
-                              <div className="flex items-start gap-3">
-                                <MapPin className="h-5 w-5 text-gray-400 mt-1" />
-                                <div>
-                                  <p className="text-sm text-gray-600">
-                                    Address
-                                  </p>
-                                  <p className="font-medium">
-                                    {selectedInstitution.address}
-                                  </p>
-                                </div>
-                              </div>
-                            )}
-                            {selectedInstitution.proofOfInstitutionUrl && (
-                              <div className="flex items-center gap-3">
-                                <ExternalLink className="h-5 w-5 text-gray-400" />
-                                <div>
-                                  <p className="text-sm text-gray-600">Proof of Institution</p>
-                                  <a
-                                    href={selectedInstitution.proofOfInstitutionUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-medium text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                                  >
-                                    View Document
-                                    <ExternalLink className="h-3 w-3" />
-                                  </a>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          <div className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Type</span>
-                              <span>{selectedInstitution.type}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">
-                                Affiliated Board
-                              </span>
-                              <span>{selectedInstitution.affiliatedBoard}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Established</span>
-                              <span>
-                                {selectedInstitution.yearOfEstablishment}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Students</span>
-                              <span>
-                                {selectedInstitution.totalStudentStrength.toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Status</span>
-                              <Badge
-                                className={`${
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Status</div>
+                              <div className="font-medium text-gray-900 flex items-center">
+                                <span className={`inline-block h-2 w-2 rounded-full mr-2 ${
                                   selectedInstitution.approvalStatus === "APPROVED"
-                                    ? "bg-transparent text-orange-600 border border-orange-400"
+                                    ? "bg-green-500"
                                     : selectedInstitution.approvalStatus === "PENDING"
-                                    ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
-                                    : "bg-red-100 text-red-800 border border-red-400"
-                                }`}
-                              >
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
+                                }`}></span>
                                 {selectedInstitution.approvalStatus}
-                              </Badge>
+                              </div>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">Suspended</span>
-                              <Badge
-                                className={`${
-                                  selectedInstitution.isSuspended
-                                    ? "bg-red-100 text-red-800 border border-red-400"
-                                    : "bg-green-100 text-green-800 border border-green-400"
-                                }`}
-                              >
-                                {selectedInstitution.isSuspended ? "Yes" : "No"}
-                              </Badge>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Email</div>
+                              <div className="font-medium text-gray-900 break-all">{selectedInstitution.email}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Affiliated Board</div>
+                              <div className="font-medium text-gray-900">{selectedInstitution.affiliatedBoard}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Established</div>
+                              <div className="font-medium text-gray-900">{selectedInstitution.yearOfEstablishment}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Phone</div>
+                              <div className="font-medium text-gray-900">{selectedInstitution.phone}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Students</div>
+                              <div className="font-medium text-gray-900">{selectedInstitution.totalStudentStrength.toLocaleString()}</div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">Website</div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.website ? (
+                                  <a href={selectedInstitution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                                    {selectedInstitution.website}
+                                  </a>
+                                ) : (
+                                  "-"
+                                )}
+                              </div>
+                            </div>
+                            <div className="md:col-span-3">
+                              <div className="text-sm text-gray-600 mb-1">Address</div>
+                              <div className="font-medium text-gray-900">{selectedInstitution.address || "-"}</div>
                             </div>
                           </div>
                         </div>

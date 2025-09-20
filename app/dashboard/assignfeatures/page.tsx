@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api";
 import type { Feature, Institution, InstitutionFeatureAssignment } from "@/lib/types";
 
@@ -48,12 +49,10 @@ export default function AssignFeaturesPage() {
     Record<string, Record<string, boolean>>
   >(() => ({}));
 
-  // Toggle loading and error states
-  const [toggleLoading, setToggleLoading] = useState<{
-    institutionId: string;
-    featureKey: string;
-  } | null>(null);
-  const [toggleError, setToggleError] = useState<string | null>(null);
+  // Update (save) loading and error states
+  const [updateLoading, setUpdateLoading] = useState<boolean>(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
 
   // Fetch institutions on component mount
   useEffect(() => {
@@ -127,24 +126,18 @@ export default function AssignFeaturesPage() {
     fetchInstitutionFeatures();
   }, [selectedInstitutionId]);
 
-  const featureStatesForSelected = useMemo(() => {
-    const current = featureOverrides[selectedInstitutionId];
-    if (current) return current;
-
+  // Original feature states (without local overrides)
+  const originalFeatureStates = useMemo(() => {
     const defaults: Record<string, boolean> = {};
 
     if (viewMode === 'overall') {
-      // Overall view: use global isActive status
       allFeatures.forEach((feature) => {
         defaults[feature.key] = feature.isActive;
       });
     } else {
-      // Institution view: use institution feature assignments
       institutionFeatureAssignments.forEach((assignment) => {
         defaults[assignment.feature.key] = assignment.enabled;
       });
-
-      // For features not assigned to this institution, use the global isActive status
       allFeatures.forEach((feature) => {
         if (!(feature.key in defaults)) {
           defaults[feature.key] = feature.isActive;
@@ -153,60 +146,78 @@ export default function AssignFeaturesPage() {
     }
 
     return defaults;
-  }, [featureOverrides, selectedInstitutionId, institutionFeatureAssignments, allFeatures, viewMode]);
+  }, [institutionFeatureAssignments, allFeatures, viewMode]);
 
-  const handleToggle = async (featureKey: string, checked: boolean) => {
+  // Current states are overrides if present, else original defaults
+  const currentFeatureStatesForSelected = useMemo(() => {
+    return featureOverrides[selectedInstitutionId] ?? originalFeatureStates;
+  }, [featureOverrides, selectedInstitutionId, originalFeatureStates]);
+
+  // Detect unsaved changes for the selected institution
+  const hasUnsavedChanges = useMemo(() => {
+    const overrides = featureOverrides[selectedInstitutionId];
+    if (!overrides) return false;
+    // Compare with original
+    for (const feature of allFeatures) {
+      const key = feature.key;
+      const original = originalFeatureStates[key] ?? false;
+      const current = overrides[key] ?? false;
+      if (original !== current) return true;
+    }
+    return false;
+  }, [featureOverrides, selectedInstitutionId, originalFeatureStates, allFeatures]);
+
+  const handleToggle = (featureKey: string, checked: boolean) => {
     // Only allow toggling in institution view mode
     if (viewMode === 'overall' || !selectedInstitutionId) return;
 
+    setUpdateError(null);
+    setUpdateSuccess(null);
+
+    const currentFeatures = featureOverrides[selectedInstitutionId] ?? originalFeatureStates;
+    const updatedFeatures = { ...currentFeatures, [featureKey]: checked };
+
+    setFeatureOverrides((prev) => ({
+      ...prev,
+      [selectedInstitutionId]: updatedFeatures,
+    }));
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedInstitutionId) return;
+    const current = featureOverrides[selectedInstitutionId] ?? originalFeatureStates;
+    const featuresArray = Object.entries(current).map(([key, enabled]) => ({ key, enabled }));
+
     try {
-      setToggleLoading({ institutionId: selectedInstitutionId, featureKey });
-      setToggleError(null);
-
-      // Prepare the features array with current state + the toggle change
-      const currentFeatures = featureOverrides[selectedInstitutionId] ?? featureStatesForSelected;
-      const updatedFeatures = { ...currentFeatures, [featureKey]: checked };
-
-      // Convert to the API format
-      const featuresArray = Object.entries(updatedFeatures).map(([key, enabled]) => ({
-        key,
-        enabled
-      }));
+      setUpdateLoading(true);
+      setUpdateError(null);
+      setUpdateSuccess(null);
 
       const response = await apiClient.assignInstitutionFeatures({
         institutionId: selectedInstitutionId,
-        features: featuresArray
+        features: featuresArray,
       });
 
-      if (response.success) {
-        // Clear any previous error
-        setToggleError(null);
-
-        // Update local state on success
-        setFeatureOverrides((prev) => ({
-          ...prev,
-          [selectedInstitutionId]: updatedFeatures
-        }));
-
-        // Also update the institution feature assignments to reflect the change
-        setInstitutionFeatureAssignments(prev =>
-          prev.map(assignment =>
-            assignment.feature.key === featureKey
-              ? { ...assignment, enabled: checked }
-              : assignment
-          )
-        );
-      } else {
-        throw new Error('Failed to update feature status');
+      if (!response.success) {
+        throw new Error('Failed to update features');
       }
+
+      setUpdateSuccess(response.data?.message || 'Updated successfully');
+
+      // Refresh assignments and clear overrides for this institution
+      const refreshed = await apiClient.getInstitutionFeatures(selectedInstitutionId);
+      if (refreshed.success && refreshed.data) {
+        setInstitutionFeatureAssignments(refreshed.data);
+      }
+      setFeatureOverrides((prev) => {
+        const next = { ...prev } as typeof prev;
+        delete next[selectedInstitutionId];
+        return next;
+      });
     } catch (err) {
-      setToggleError(err instanceof Error ? err.message : 'An error occurred');
-      // Revert the local state on error
-      setTimeout(() => {
-        // This will cause a re-render and the switch will revert to its previous state
-      }, 100);
+      setUpdateError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setToggleLoading(null);
+      setUpdateLoading(false);
     }
   };
 
@@ -330,10 +341,15 @@ export default function AssignFeaturesPage() {
             }
           </div>
 
-          {/* Toggle Error Message */}
-          {toggleError && viewMode === 'institution' && (
+          {/* Update status messages */}
+          {updateError && viewMode === 'institution' && (
             <div className="text-center text-sm text-red-600 bg-red-50 p-2 rounded">
-              {toggleError}
+              {updateError}
+            </div>
+          )}
+          {updateSuccess && viewMode === 'institution' && (
+            <div className="text-center text-sm text-green-700 bg-green-50 p-2 rounded">
+              {updateSuccess}
             </div>
           )}
 
@@ -390,13 +406,12 @@ export default function AssignFeaturesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Switch
-                          checked={!!featureStatesForSelected[f.key]}
+                          checked={!!currentFeatureStatesForSelected[f.key]}
                           onCheckedChange={(checked) =>
                             handleToggle(f.key, !!checked)
                           }
                           disabled={
-                            viewMode === 'overall' ||
-                            (toggleLoading?.institutionId === selectedInstitutionId && toggleLoading?.featureKey === f.key)
+                            viewMode === 'overall' || updateLoading
                           }
                           aria-label={`${f.name} status`}
                         />
@@ -407,6 +422,17 @@ export default function AssignFeaturesPage() {
                   </Table>
                 </div>
               </div>
+              {viewMode === 'institution' && (
+                <div className="mt-4 flex items-center justify-end gap-3">
+                  <Button
+                    variant="default"
+                    onClick={handleUpdate}
+                    disabled={!hasUnsavedChanges || updateLoading}
+                  >
+                    {updateLoading ? 'Updating...' : 'Update'}
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

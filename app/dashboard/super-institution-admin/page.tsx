@@ -263,6 +263,45 @@ export default function SuperInstitutionAdminPage() {
   };
 
 
+  // Handle edit institution
+  const handleEditInstitution = async (institutionId: string) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      // Fetch institution details for editing
+      const institutionResponse = await apiClient.getInstitutionById(institutionId);
+
+      if (institutionResponse.success && institutionResponse.data) {
+        const institution = institutionResponse.data;
+
+        // Populate form data with existing institution data
+        setFormData({
+          name: institution.name,
+          email: institution.email,
+          password: "", // Don't pre-populate password for security
+          institutionName: institution.name, // Use institution name as institutionName
+          POC: institution.pocName || "",
+          phoneNumber: institution.phone || "",
+          role: "SUPER_INSTITUTION_ADMIN",
+        });
+
+        // Set selected institution for editing
+        setSelectedInstitution(institution);
+        setViewMode("edit");
+      } else {
+        setError(
+          institutionResponse.message || "Failed to load institution details"
+        );
+      }
+    } catch (err) {
+      console.error("Error fetching institution details for edit:", err);
+      setError(handleApiError(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle edit form submission
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1472,14 +1511,11 @@ export default function SuperInstitutionAdminPage() {
                   </div>
                 </div>
                 <Button
-                  onClick={() => {
-                    setInstitutionToApprove(selectedInstitution);
-                    setApprovalModalOpen(true);
-                  }}
+                  onClick={() => handleEditInstitution(selectedInstitution.id)}
                   className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
                 >
                   <Edit className="mr-2 h-4 w-4" />
-                  {selectedInstitution.approvalStatus === "PENDING" ? "Approve/Reject" : "Change Status"}
+                  Edit
                 </Button>
               </div>
 

@@ -166,18 +166,28 @@ export default function InstitutionsPage() {
   const [viewMode, setViewMode] = useState<"list" | "detail" | "edit">("list");
 
   // Institution detail data
-  const [institutionStudents, setInstitutionStudents] = useState<InstitutionStudentsResponse | null>(null);
-  const [institutionSummary, setInstitutionSummary] = useState<InstitutionSummaryResponse | null>(null);
-  const [institutionStudentsBreakdown, setInstitutionStudentsBreakdown] = useState<InstitutionStudentsBreakdownResponse | null>(null);
-  const [institutionStats, setInstitutionStats] = useState<InstitutionStatsResponse | null>(null);
+  const [institutionStudents, setInstitutionStudents] =
+    useState<InstitutionStudentsResponse | null>(null);
+  const [institutionSummary, setInstitutionSummary] =
+    useState<InstitutionSummaryResponse | null>(null);
+  const [institutionStudentsBreakdown, setInstitutionStudentsBreakdown] =
+    useState<InstitutionStudentsBreakdownResponse | null>(null);
+  const [institutionStats, setInstitutionStats] =
+    useState<InstitutionStatsResponse | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [institutionFeatures, setInstitutionFeatures] = useState<InstitutionFeatureAssignment[] | null>(null);
+  const [institutionFeatures, setInstitutionFeatures] = useState<
+    InstitutionFeatureAssignment[] | null
+  >(null);
 
   // Feature editing state
   const [featureEdits, setFeatureEdits] = useState<Record<string, boolean>>({});
   const [featureUpdateLoading, setFeatureUpdateLoading] = useState(false);
-  const [featureUpdateError, setFeatureUpdateError] = useState<string | null>(null);
-  const [featureUpdateSuccess, setFeatureUpdateSuccess] = useState<string | null>(null);
+  const [featureUpdateError, setFeatureUpdateError] = useState<string | null>(
+    null
+  );
+  const [featureUpdateSuccess, setFeatureUpdateSuccess] = useState<
+    string | null
+  >(null);
 
   // Students pagination state
   const [studentsPage, setStudentsPage] = useState(1);
@@ -196,11 +206,13 @@ export default function InstitutionsPage() {
 
   // Modal state for approval/rejection
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
-  const [institutionToApprove, setInstitutionToApprove] = useState<Institution | null>(null);
+  const [institutionToApprove, setInstitutionToApprove] =
+    useState<Institution | null>(null);
 
   // Modal state for suspension
   const [suspendModalOpen, setSuspendModalOpen] = useState(false);
-  const [institutionToSuspend, setInstitutionToSuspend] = useState<Institution | null>(null);
+  const [institutionToSuspend, setInstitutionToSuspend] =
+    useState<Institution | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -222,8 +234,6 @@ export default function InstitutionsPage() {
     secondaryColor: "#ffffff",
     password: "",
   });
-
-  
 
   // Fetch institutions from API
   const fetchInstitutions = useCallback(async () => {
@@ -442,13 +452,20 @@ export default function InstitutionsPage() {
           setError("");
 
           // Fetch institution details
-          const institutionResponse = await apiClient.getInstitutionById(institutionId);
+          const institutionResponse = await apiClient.getInstitutionById(
+            institutionId
+          );
 
           if (institutionResponse.success && institutionResponse.data) {
             setSelectedInstitution(institutionResponse.data);
 
             // Fetch additional institution data in parallel
-            const [summaryResponse, breakdownResponse, statsResponse, featuresResponse] = await Promise.allSettled([
+            const [
+              summaryResponse,
+              breakdownResponse,
+              statsResponse,
+              featuresResponse,
+            ] = await Promise.allSettled([
               apiClient.getInstitutionSummary(institutionId),
               apiClient.getInstitutionStudentsBreakdown(institutionId),
               apiClient.getInstitutionStats(institutionId),
@@ -456,22 +473,38 @@ export default function InstitutionsPage() {
             ]);
 
             // Handle summary data
-            if (summaryResponse.status === "fulfilled" && summaryResponse.value.success && summaryResponse.value.data) {
+            if (
+              summaryResponse.status === "fulfilled" &&
+              summaryResponse.value.success &&
+              summaryResponse.value.data
+            ) {
               setInstitutionSummary(summaryResponse.value.data!);
             }
 
             // Handle breakdown data
-            if (breakdownResponse.status === "fulfilled" && breakdownResponse.value.success && breakdownResponse.value.data) {
+            if (
+              breakdownResponse.status === "fulfilled" &&
+              breakdownResponse.value.success &&
+              breakdownResponse.value.data
+            ) {
               setInstitutionStudentsBreakdown(breakdownResponse.value.data!);
             }
 
             // Handle stats data
-            if (statsResponse.status === "fulfilled" && statsResponse.value.success && statsResponse.value.data) {
+            if (
+              statsResponse.status === "fulfilled" &&
+              statsResponse.value.success &&
+              statsResponse.value.data
+            ) {
               setInstitutionStats(statsResponse.value.data!);
             }
 
             // Handle features data
-            if (featuresResponse.status === "fulfilled" && featuresResponse.value.success && featuresResponse.value.data) {
+            if (
+              featuresResponse.status === "fulfilled" &&
+              featuresResponse.value.success &&
+              featuresResponse.value.data
+            ) {
               setInstitutionFeatures(featuresResponse.value.data!);
             } else {
               setInstitutionFeatures([]);
@@ -482,7 +515,10 @@ export default function InstitutionsPage() {
 
             setViewMode("detail");
           } else {
-            setError(institutionResponse.message || "Failed to fetch institution details");
+            setError(
+              institutionResponse.message ||
+                "Failed to fetch institution details"
+            );
           }
         } catch (err) {
           console.error("Error fetching institution details:", err);
@@ -498,7 +534,9 @@ export default function InstitutionsPage() {
           setError("");
 
           // Fetch institution details for editing
-          const institutionResponse = await apiClient.getInstitutionById(institutionId);
+          const institutionResponse = await apiClient.getInstitutionById(
+            institutionId
+          );
 
           if (institutionResponse.success && institutionResponse.data) {
             setSelectedInstitution(institutionResponse.data);
@@ -512,18 +550,23 @@ export default function InstitutionsPage() {
               phone: institutionResponse.data.phone,
               website: institutionResponse.data.website || "",
               yearOfEstablishment: institutionResponse.data.yearOfEstablishment,
-              totalStudentStrength: institutionResponse.data.totalStudentStrength.toString(),
+              totalStudentStrength:
+                institutionResponse.data.totalStudentStrength.toString(),
               address: institutionResponse.data.address,
               proofOfInstitution: null,
               logo: null,
               primaryColor: institutionResponse.data.primaryColor || "#ffffff",
-              secondaryColor: institutionResponse.data.secondaryColor || "#ffffff",
+              secondaryColor:
+                institutionResponse.data.secondaryColor || "#ffffff",
               password: "", // Don't pre-populate password for security
             });
 
             setViewMode("edit");
           } else {
-            setError(institutionResponse.message || "Failed to fetch institution details");
+            setError(
+              institutionResponse.message ||
+                "Failed to fetch institution details"
+            );
           }
         } catch (err) {
           console.error("Error fetching institution details for edit:", err);
@@ -536,21 +579,28 @@ export default function InstitutionsPage() {
   };
 
   // Fetch students with pagination
-  const fetchInstitutionStudents = useCallback(async (institutionId: string, page: number = 1) => {
-    try {
-      setStudentsLoading(true);
-      const response = await apiClient.getInstitutionStudents(institutionId, page, studentsPageSize);
+  const fetchInstitutionStudents = useCallback(
+    async (institutionId: string, page: number = 1) => {
+      try {
+        setStudentsLoading(true);
+        const response = await apiClient.getInstitutionStudents(
+          institutionId,
+          page,
+          studentsPageSize
+        );
 
-      if (response.success && response.data) {
-        setInstitutionStudents(response.data);
-        setStudentsPage(page);
+        if (response.success && response.data) {
+          setInstitutionStudents(response.data);
+          setStudentsPage(page);
+        }
+      } catch (err) {
+        console.error("Error fetching institution students:", err);
+      } finally {
+        setStudentsLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching institution students:", err);
-    } finally {
-      setStudentsLoading(false);
-    }
-  }, [studentsPageSize]);
+    },
+    [studentsPageSize]
+  );
 
   // Handle students page change
   const handleStudentsPageChange = (newPage: number) => {
@@ -558,7 +608,6 @@ export default function InstitutionsPage() {
       fetchInstitutionStudents(selectedInstitution.id, newPage);
     }
   };
-
 
   // Handle institution edit
   const handleEditInstitution = async (e: React.FormEvent) => {
@@ -589,7 +638,10 @@ export default function InstitutionsPage() {
         secondaryColor: formData.secondaryColor,
       };
 
-      const response = await apiClient.updateInstitution(selectedInstitution.id, updateData);
+      const response = await apiClient.updateInstitution(
+        selectedInstitution.id,
+        updateData
+      );
 
       if (response.success) {
         // Refresh institutions list
@@ -633,20 +685,24 @@ export default function InstitutionsPage() {
       setCreateLoading(true);
       setError("");
 
-      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+      const baseURL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
       const token = localStorage.getItem("authToken");
 
-      const response = await fetch(`${baseURL}/super-admin/institutions/approval`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          id: institutionToApprove.id,
-          action: action,
-        }),
-      });
+      const response = await fetch(
+        `${baseURL}/super-admin/institutions/approval`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            id: institutionToApprove.id,
+            action: action,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -658,7 +714,9 @@ export default function InstitutionsPage() {
         setApprovalModalOpen(false);
         setInstitutionToApprove(null);
       } else {
-        setError(data.message || `Failed to ${action.toLowerCase()} institution`);
+        setError(
+          data.message || `Failed to ${action.toLowerCase()} institution`
+        );
       }
     } catch (err) {
       console.error(`Error ${action.toLowerCase()}ing institution:`, err);
@@ -676,20 +734,24 @@ export default function InstitutionsPage() {
       setCreateLoading(true);
       setError("");
 
-      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+      const baseURL =
+        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
       const token = localStorage.getItem("authToken");
 
-      const response = await fetch(`${baseURL}/super-admin/institutions/suspend`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          id: institutionToSuspend.id,
-          suspend: suspend,
-        }),
-      });
+      const response = await fetch(
+        `${baseURL}/super-admin/institutions/suspend`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            id: institutionToSuspend.id,
+            suspend: suspend,
+          }),
+        }
+      );
 
       const data = await response.json();
 
@@ -701,10 +763,16 @@ export default function InstitutionsPage() {
         setSuspendModalOpen(false);
         setInstitutionToSuspend(null);
       } else {
-        setError(data.message || `Failed to ${suspend ? 'suspend' : 'unsuspend'} institution`);
+        setError(
+          data.message ||
+            `Failed to ${suspend ? "suspend" : "unsuspend"} institution`
+        );
       }
     } catch (err) {
-      console.error(`Error ${suspend ? 'suspending' : 'unsuspending'} institution:`, err);
+      console.error(
+        `Error ${suspend ? "suspending" : "unsuspending"} institution:`,
+        err
+      );
       setError(handleApiError(err));
     } finally {
       setCreateLoading(false);
@@ -716,7 +784,7 @@ export default function InstitutionsPage() {
     setFeatureUpdateError(null);
     setFeatureUpdateSuccess(null);
 
-    setFeatureEdits(prev => ({
+    setFeatureEdits((prev) => ({
       ...prev,
       [featureId]: enabled,
     }));
@@ -732,7 +800,7 @@ export default function InstitutionsPage() {
       setFeatureUpdateSuccess(null);
 
       // Get current states (with edits applied)
-      const updatedFeatures = institutionFeatures.map(assignment => ({
+      const updatedFeatures = institutionFeatures.map((assignment) => ({
         key: assignment.feature.key,
         enabled: featureEdits[assignment.id] ?? assignment.enabled,
       }));
@@ -743,13 +811,17 @@ export default function InstitutionsPage() {
       });
 
       if (!response.success) {
-        throw new Error('Failed to update features');
+        throw new Error("Failed to update features");
       }
 
-      setFeatureUpdateSuccess(response.data?.message || 'Features updated successfully');
+      setFeatureUpdateSuccess(
+        response.data?.message || "Features updated successfully"
+      );
 
       // Refresh institution features
-      const refreshed = await apiClient.getInstitutionFeatures(selectedInstitution.id);
+      const refreshed = await apiClient.getInstitutionFeatures(
+        selectedInstitution.id
+      );
       if (refreshed.success && refreshed.data) {
         setInstitutionFeatures(refreshed.data);
       }
@@ -757,7 +829,9 @@ export default function InstitutionsPage() {
       // Clear edits
       setFeatureEdits({});
     } catch (err) {
-      setFeatureUpdateError(err instanceof Error ? err.message : 'An error occurred');
+      setFeatureUpdateError(
+        err instanceof Error ? err.message : "An error occurred"
+      );
     } finally {
       setFeatureUpdateLoading(false);
     }
@@ -775,8 +849,6 @@ export default function InstitutionsPage() {
     setStatsLoading(false);
     setViewMode("list");
   };
-
-
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -1873,9 +1945,11 @@ export default function InstitutionsPage() {
                                     <div className="flex flex-col gap-1">
                                       <Badge
                                         className={`cursor-pointer hover:opacity-80 transition-opacity ${
-                                          institution.approvalStatus === "APPROVED"
+                                          institution.approvalStatus ===
+                                          "APPROVED"
                                             ? "bg-transparent text-orange-600 border border-orange-400"
-                                            : institution.approvalStatus === "PENDING"
+                                            : institution.approvalStatus ===
+                                              "PENDING"
                                             ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
                                             : "bg-red-100 text-red-800 border border-red-400"
                                         }`}
@@ -1896,8 +1970,6 @@ export default function InstitutionsPage() {
                                       )}
                                     </div>
                                   </TableCell>
-
-                                  
 
                                   {/* Established Column */}
                                   <TableCell className="px-4">
@@ -2089,7 +2161,12 @@ export default function InstitutionsPage() {
                       <div className="flex gap-3">
                         <Button
                           size="sm"
-                          onClick={() => handleInstitutionAction(selectedInstitution.id, "edit")}
+                          onClick={() =>
+                            handleInstitutionAction(
+                              selectedInstitution.id,
+                              "edit"
+                            )
+                          }
                           className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
                         >
                           Edit
@@ -2114,23 +2191,37 @@ export default function InstitutionsPage() {
                         <div className="space-y-6">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Institution</div>
-                              <div className="font-medium text-gray-900">{selectedInstitution.name}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Institution
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.name}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Type</div>
-                              <div className="font-medium text-gray-900">{selectedInstitution.type}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Type
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.type}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Status</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Status
+                              </div>
                               <div className="font-medium text-gray-900 flex items-center">
-                                <span className={`inline-block h-2 w-2 rounded-full mr-2 ${
-                                  selectedInstitution.approvalStatus === "APPROVED"
-                                    ? "bg-green-500"
-                                    : selectedInstitution.approvalStatus === "PENDING"
-                                    ? "bg-yellow-500"
-                                    : "bg-red-500"
-                                }`}></span>
+                                <span
+                                  className={`inline-block h-2 w-2 rounded-full mr-2 ${
+                                    selectedInstitution.approvalStatus ===
+                                    "APPROVED"
+                                      ? "bg-green-500"
+                                      : selectedInstitution.approvalStatus ===
+                                        "PENDING"
+                                      ? "bg-yellow-500"
+                                      : "bg-red-500"
+                                  }`}
+                                ></span>
                                 {selectedInstitution.approvalStatus}
                               </div>
                               <div className="mt-2">
@@ -2143,30 +2234,57 @@ export default function InstitutionsPage() {
                               </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Email</div>
-                              <div className="font-medium text-gray-900 break-all">{selectedInstitution.email}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Email
+                              </div>
+                              <div className="font-medium text-gray-900 break-all">
+                                {selectedInstitution.email}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Affiliated Board</div>
-                              <div className="font-medium text-gray-900">{selectedInstitution.affiliatedBoard}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Affiliated Board
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.affiliatedBoard}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Established</div>
-                              <div className="font-medium text-gray-900">{selectedInstitution.yearOfEstablishment}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Established
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.yearOfEstablishment}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Phone</div>
-                              <div className="font-medium text-gray-900">{selectedInstitution.phone}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Phone
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.phone}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Students</div>
-                              <div className="font-medium text-gray-900">{selectedInstitution.totalStudentStrength.toLocaleString()}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Students
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.totalStudentStrength.toLocaleString()}
+                              </div>
                             </div>
                             <div>
-                              <div className="text-sm text-gray-600 mb-1">Website</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Website
+                              </div>
                               <div className="font-medium text-gray-900">
                                 {selectedInstitution.website ? (
-                                  <a href={selectedInstitution.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800">
+                                  <a
+                                    href={selectedInstitution.website}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800"
+                                  >
                                     {selectedInstitution.website}
                                   </a>
                                 ) : (
@@ -2175,8 +2293,12 @@ export default function InstitutionsPage() {
                               </div>
                             </div>
                             <div className="md:col-span-3">
-                              <div className="text-sm text-gray-600 mb-1">Address</div>
-                              <div className="font-medium text-gray-900">{selectedInstitution.address || "-"}</div>
+                              <div className="text-sm text-gray-600 mb-1">
+                                Address
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {selectedInstitution.address || "-"}
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2185,12 +2307,18 @@ export default function InstitutionsPage() {
                       <AccordionSection title="Assigned Features">
                         {/* Update status messages */}
                         {featureUpdateError && (
-                          <div className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded" onClick={(e) => e.stopPropagation()}>
+                          <div
+                            className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {featureUpdateError}
                           </div>
                         )}
                         {featureUpdateSuccess && (
-                          <div className="mb-4 text-center text-sm text-green-700 bg-green-50 p-2 rounded" onClick={(e) => e.stopPropagation()}>
+                          <div
+                            className="mb-4 text-center text-sm text-green-700 bg-green-50 p-2 rounded"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {featureUpdateSuccess}
                           </div>
                         )}
@@ -2203,22 +2331,42 @@ export default function InstitutionsPage() {
                                   <Table>
                                     <TableHeader>
                                       <TableRow className="bg-gray-50">
-                                        <TableHead className="text-xs">Feature</TableHead>
-                                        <TableHead className="text-xs">Description</TableHead>
-                                        <TableHead className="text-xs text-right">Enabled</TableHead>
+                                        <TableHead className="text-xs">
+                                          Feature
+                                        </TableHead>
+                                        <TableHead className="text-xs">
+                                          Description
+                                        </TableHead>
+                                        <TableHead className="text-xs text-right">
+                                          Enabled
+                                        </TableHead>
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                       {institutionFeatures.map((assignment) => (
                                         <TableRow key={assignment.id}>
-                                          <TableCell className="text-sm">{assignment.feature.name}</TableCell>
-                                          <TableCell className="text-sm text-gray-600">{assignment.feature.description}</TableCell>
+                                          <TableCell className="text-sm">
+                                            {assignment.feature.name}
+                                          </TableCell>
+                                          <TableCell className="text-sm text-gray-600">
+                                            {assignment.feature.description}
+                                          </TableCell>
                                           <TableCell className="text-sm text-right">
-                                            <div onClick={(e) => e.stopPropagation()}>
+                                            <div
+                                              onClick={(e) =>
+                                                e.stopPropagation()
+                                              }
+                                            >
                                               <Switch
-                                                checked={featureEdits[assignment.id] ?? assignment.enabled}
+                                                checked={
+                                                  featureEdits[assignment.id] ??
+                                                  assignment.enabled
+                                                }
                                                 onCheckedChange={(checked) =>
-                                                  handleFeatureToggle(assignment.id, !!checked)
+                                                  handleFeatureToggle(
+                                                    assignment.id,
+                                                    !!checked
+                                                  )
                                                 }
                                                 disabled={featureUpdateLoading}
                                                 aria-label={`${assignment.feature.name} status`}
@@ -2233,25 +2381,38 @@ export default function InstitutionsPage() {
                               </div>
 
                               {/* Save button */}
-                              <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
+                              <div
+                                className="flex items-center justify-end gap-3"
+                                onClick={(e) => e.stopPropagation()}
+                              >
                                 <Button
                                   variant="outline"
                                   onClick={() => setFeatureEdits({})}
-                                  disabled={featureUpdateLoading || Object.keys(featureEdits).length === 0}
+                                  disabled={
+                                    featureUpdateLoading ||
+                                    Object.keys(featureEdits).length === 0
+                                  }
                                 >
                                   Reset Changes
                                 </Button>
                                 <Button
                                   variant="default"
                                   onClick={handleFeatureUpdate}
-                                  disabled={featureUpdateLoading || Object.keys(featureEdits).length === 0}
+                                  disabled={
+                                    featureUpdateLoading ||
+                                    Object.keys(featureEdits).length === 0
+                                  }
                                 >
-                                  {featureUpdateLoading ? 'Updating...' : 'Update Features'}
+                                  {featureUpdateLoading
+                                    ? "Updating..."
+                                    : "Update Features"}
                                 </Button>
                               </div>
                             </div>
                           ) : (
-                            <div className="text-sm text-gray-600">No features assigned.</div>
+                            <div className="text-sm text-gray-600">
+                              No features assigned.
+                            </div>
                           )
                         ) : (
                           <div className="flex items-center justify-center py-6">
@@ -2269,31 +2430,55 @@ export default function InstitutionsPage() {
                           <div className="space-y-6">
                             {/* Students Breakdown */}
                             <div className="space-y-4">
-                              <h4 className="text-sm font-medium text-gray-900">Students Breakdown</h4>
+                              <h4 className="text-sm font-medium text-gray-900">
+                                Students Breakdown
+                              </h4>
 
                               {/* By Class */}
                               <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-2">By Class</h5>
+                                <h5 className="text-sm font-medium text-gray-700 mb-2">
+                                  By Class
+                                </h5>
                                 <div className="grid gap-2">
-                                  {institutionStudentsBreakdown.byClass.map((classItem) => (
-                                    <div key={classItem.standardId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                                      <span className="text-sm text-gray-900">{classItem.standardName}</span>
-                                      <Badge variant="secondary">{classItem.count} students</Badge>
-                                    </div>
-                                  ))}
+                                  {institutionStudentsBreakdown.byClass.map(
+                                    (classItem) => (
+                                      <div
+                                        key={classItem.standardId}
+                                        className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
+                                      >
+                                        <span className="text-sm text-gray-900">
+                                          {classItem.standardName}
+                                        </span>
+                                        <Badge variant="secondary">
+                                          {classItem.count} students
+                                        </Badge>
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               </div>
 
                               {/* By Section */}
                               <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-2">By Section</h5>
+                                <h5 className="text-sm font-medium text-gray-700 mb-2">
+                                  By Section
+                                </h5>
                                 <div className="grid gap-2">
-                                  {institutionStudentsBreakdown.bySection.map((sectionItem) => (
-                                    <div key={sectionItem.sectionId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                                      <span className="text-sm text-gray-900">{sectionItem.sectionName}</span>
-                                      <Badge variant="secondary">{sectionItem.count} students</Badge>
-                                    </div>
-                                  ))}
+                                  {institutionStudentsBreakdown.bySection.map(
+                                    (sectionItem) => (
+                                      <div
+                                        key={sectionItem.sectionId}
+                                        className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
+                                      >
+                                        <span className="text-sm text-gray-900">
+                                          {sectionItem.sectionName}
+                                        </span>
+                                        <Badge variant="secondary">
+                                          {sectionItem.count} students
+                                        </Badge>
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -2302,7 +2487,10 @@ export default function InstitutionsPage() {
                             <div className="space-y-4">
                               <div className="flex items-center justify-between">
                                 <h4 className="text-sm font-medium text-gray-900">
-                                  Students {institutionStudents ? `(${institutionStudents.meta.total})` : ''}
+                                  Students{" "}
+                                  {institutionStudents
+                                    ? `(${institutionStudents.meta.total})`
+                                    : ""}
                                 </h4>
                                 {studentsLoading && (
                                   <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -2318,29 +2506,40 @@ export default function InstitutionsPage() {
                                     <Table>
                                       <TableHeader>
                                         <TableRow className="bg-gray-50">
-                                          <TableHead className="text-xs">Name</TableHead>
-                                          <TableHead className="text-xs">Email</TableHead>
-                                          <TableHead className="text-xs">Phone</TableHead>
-                                          <TableHead className="text-xs">Joined</TableHead>
+                                          <TableHead className="text-xs">
+                                            Name
+                                          </TableHead>
+                                          <TableHead className="text-xs">
+                                            Email
+                                          </TableHead>
+                                          <TableHead className="text-xs">
+                                            Phone
+                                          </TableHead>
+                                          <TableHead className="text-xs">
+                                            Joined
+                                          </TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                    {institutionStudents.data.map((student) => (
-                                      <TableRow key={student.id}>
-                                        <TableCell className="text-sm">
-                                          {student.firstName} {student.lastName}
-                                        </TableCell>
-                                            <TableCell className="text-sm text-gray-600">
-                                              {student.email}
-                                            </TableCell>
-                                            <TableCell className="text-sm text-gray-600">
-                                              {student.phone}
-                                            </TableCell>
-                                        <TableCell className="text-sm text-gray-600">
-                                          {formatDate(student.createdAt)}
-                                        </TableCell>
-                                      </TableRow>
-                                        ))}
+                                        {institutionStudents.data.map(
+                                          (student) => (
+                                            <TableRow key={student.id}>
+                                              <TableCell className="text-sm">
+                                                {student.firstName}{" "}
+                                                {student.lastName}
+                                              </TableCell>
+                                              <TableCell className="text-sm text-gray-600">
+                                                {student.email}
+                                              </TableCell>
+                                              <TableCell className="text-sm text-gray-600">
+                                                {student.phone}
+                                              </TableCell>
+                                              <TableCell className="text-sm text-gray-600">
+                                                {formatDate(student.createdAt)}
+                                              </TableCell>
+                                            </TableRow>
+                                          )
+                                        )}
                                       </TableBody>
                                     </Table>
                                   </div>
@@ -2350,7 +2549,18 @@ export default function InstitutionsPage() {
                                     <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
                                       {/* Pagination Info */}
                                       <div className="text-xs text-gray-500 text-center">
-                                        Showing {((institutionStudents.meta.page - 1) * institutionStudents.meta.limit) + 1} to {Math.min(institutionStudents.meta.page * institutionStudents.meta.limit, institutionStudents.meta.total)} of {institutionStudents.meta.total} students
+                                        Showing{" "}
+                                        {(institutionStudents.meta.page - 1) *
+                                          institutionStudents.meta.limit +
+                                          1}{" "}
+                                        to{" "}
+                                        {Math.min(
+                                          institutionStudents.meta.page *
+                                            institutionStudents.meta.limit,
+                                          institutionStudents.meta.total
+                                        )}{" "}
+                                        of {institutionStudents.meta.total}{" "}
+                                        students
                                       </div>
 
                                       {/* Page Navigation */}
@@ -2358,8 +2568,15 @@ export default function InstitutionsPage() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          onClick={() => handleStudentsPageChange(studentsPage - 1)}
-                                          disabled={studentsPage === 1 || studentsLoading}
+                                          onClick={() =>
+                                            handleStudentsPageChange(
+                                              studentsPage - 1
+                                            )
+                                          }
+                                          disabled={
+                                            studentsPage === 1 ||
+                                            studentsLoading
+                                          }
                                           className="h-8"
                                         >
                                           <ChevronLeft className="h-4 w-4" />
@@ -2369,27 +2586,58 @@ export default function InstitutionsPage() {
                                         <div className="flex items-center gap-1">
                                           {/* Show page numbers - limited to 5 pages max */}
                                           {Array.from(
-                                            { length: Math.min(5, institutionStudents.meta.totalPages) },
+                                            {
+                                              length: Math.min(
+                                                5,
+                                                institutionStudents.meta
+                                                  .totalPages
+                                              ),
+                                            },
                                             (_, i) => {
                                               let pageNumber;
-                                              if (institutionStudents.meta.totalPages <= 5) {
+                                              if (
+                                                institutionStudents.meta
+                                                  .totalPages <= 5
+                                              ) {
                                                 pageNumber = i + 1;
                                               } else if (studentsPage <= 3) {
                                                 pageNumber = i + 1;
-                                              } else if (studentsPage >= institutionStudents.meta.totalPages - 2) {
-                                                pageNumber = institutionStudents.meta.totalPages - 4 + i;
+                                              } else if (
+                                                studentsPage >=
+                                                institutionStudents.meta
+                                                  .totalPages -
+                                                  2
+                                              ) {
+                                                pageNumber =
+                                                  institutionStudents.meta
+                                                    .totalPages -
+                                                  4 +
+                                                  i;
                                               } else {
-                                                pageNumber = studentsPage - 2 + i;
+                                                pageNumber =
+                                                  studentsPage - 2 + i;
                                               }
 
                                               return (
                                                 <Button
                                                   key={pageNumber}
-                                                  variant={studentsPage === pageNumber ? "default" : "outline"}
+                                                  variant={
+                                                    studentsPage === pageNumber
+                                                      ? "default"
+                                                      : "outline"
+                                                  }
                                                   size="sm"
-                                                  onClick={() => handleStudentsPageChange(pageNumber)}
+                                                  onClick={() =>
+                                                    handleStudentsPageChange(
+                                                      pageNumber
+                                                    )
+                                                  }
                                                   disabled={studentsLoading}
-                                                  className={`h-8 w-8 p-0 ${studentsPage === pageNumber ? "bg-brand-gradient text-white" : ""}`}
+                                                  className={`h-8 w-8 p-0 ${
+                                                    studentsPage === pageNumber
+                                                      ? "bg-brand-gradient text-white"
+                                                      : ""
+                                                  }`}
                                                 >
                                                   {pageNumber}
                                                 </Button>
@@ -2401,8 +2649,16 @@ export default function InstitutionsPage() {
                                         <Button
                                           variant="outline"
                                           size="sm"
-                                          onClick={() => handleStudentsPageChange(studentsPage + 1)}
-                                          disabled={studentsPage === institutionStudents.meta.totalPages || studentsLoading}
+                                          onClick={() =>
+                                            handleStudentsPageChange(
+                                              studentsPage + 1
+                                            )
+                                          }
+                                          disabled={
+                                            studentsPage ===
+                                              institutionStudents.meta
+                                                .totalPages || studentsLoading
+                                          }
                                           className="h-8"
                                         >
                                           Next
@@ -2426,47 +2682,81 @@ export default function InstitutionsPage() {
                         )}
                       </AccordionSection>
 
-
                       <AccordionSection title="Analytics summary">
                         {institutionSummary ? (
                           <div className="space-y-6">
                             {/* Institution Metrics */}
-                          <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-4">Institution Statistics</h4>
+                            <div>
+                              <h4 className="text-sm font-medium text-gray-900 mb-4">
+                                Institution Statistics
+                              </h4>
                               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                 <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-blue-600">{institutionSummary.totals.students}</div>
-                                  <div className="text-xs text-gray-600">Total Students</div>
+                                  <div className="text-2xl font-bold text-blue-600">
+                                    {institutionSummary.totals.students}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    Total Students
+                                  </div>
                                 </div>
                                 <div className="text-center p-4 bg-green-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-green-600">{institutionSummary.totals.quizzes}</div>
-                                  <div className="text-xs text-gray-600">Total Quizzes</div>
+                                  <div className="text-2xl font-bold text-green-600">
+                                    {institutionSummary.totals.quizzes}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    Total Quizzes
+                                  </div>
                                 </div>
                                 <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-yellow-600">{institutionSummary.totals.exams}</div>
-                                  <div className="text-xs text-gray-600">Total Exams</div>
+                                  <div className="text-2xl font-bold text-yellow-600">
+                                    {institutionSummary.totals.exams}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    Total Exams
+                                  </div>
                                 </div>
                                 <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-purple-600">{institutionSummary.totals.projects}</div>
-                                  <div className="text-xs text-gray-600">Total Projects</div>
+                                  <div className="text-2xl font-bold text-purple-600">
+                                    {institutionSummary.totals.projects}
+                                  </div>
+                                  <div className="text-xs text-gray-600">
+                                    Total Projects
+                                  </div>
                                 </div>
                               </div>
                             </div>
 
                             {/* Completion Rates */}
                             <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-4">Completion Rates</h4>
+                              <h4 className="text-sm font-medium text-gray-900 mb-4">
+                                Completion Rates
+                              </h4>
                               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="p-4 bg-gray-50 rounded-lg">
                                   <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">Quiz Submissions</span>
-                                    <span className="text-sm font-medium">{institutionSummary.totals.quizSubmissions}</span>
+                                    <span className="text-sm text-gray-600">
+                                      Quiz Submissions
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                      {
+                                        institutionSummary.totals
+                                          .quizSubmissions
+                                      }
+                                    </span>
                                   </div>
                                   <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
                                       className="bg-green-500 h-2 rounded-full"
                                       style={{
-                                        width: `${institutionSummary.totals.quizzes > 0 ? (institutionSummary.totals.quizSubmissions / institutionSummary.totals.quizzes) * 100 : 0}%`
+                                        width: `${
+                                          institutionSummary.totals.quizzes > 0
+                                            ? (institutionSummary.totals
+                                                .quizSubmissions /
+                                                institutionSummary.totals
+                                                  .quizzes) *
+                                              100
+                                            : 0
+                                        }%`,
                                       }}
                                     ></div>
                                   </div>
@@ -2474,14 +2764,26 @@ export default function InstitutionsPage() {
 
                                 <div className="p-4 bg-gray-50 rounded-lg">
                                   <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">Completed Exams</span>
-                                    <span className="text-sm font-medium">{institutionSummary.totals.completedExams}</span>
+                                    <span className="text-sm text-gray-600">
+                                      Completed Exams
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                      {institutionSummary.totals.completedExams}
+                                    </span>
                                   </div>
                                   <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
                                       className="bg-blue-500 h-2 rounded-full"
                                       style={{
-                                        width: `${institutionSummary.totals.exams > 0 ? (institutionSummary.totals.completedExams / institutionSummary.totals.exams) * 100 : 0}%`
+                                        width: `${
+                                          institutionSummary.totals.exams > 0
+                                            ? (institutionSummary.totals
+                                                .completedExams /
+                                                institutionSummary.totals
+                                                  .exams) *
+                                              100
+                                            : 0
+                                        }%`,
                                       }}
                                     ></div>
                                   </div>
@@ -2489,14 +2791,29 @@ export default function InstitutionsPage() {
 
                                 <div className="p-4 bg-gray-50 rounded-lg">
                                   <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">Completed Projects</span>
-                                    <span className="text-sm font-medium">{institutionSummary.totals.completedProjects}</span>
+                                    <span className="text-sm text-gray-600">
+                                      Completed Projects
+                                    </span>
+                                    <span className="text-sm font-medium">
+                                      {
+                                        institutionSummary.totals
+                                          .completedProjects
+                                      }
+                                    </span>
                                   </div>
                                   <div className="w-full bg-gray-200 rounded-full h-2">
                                     <div
                                       className="bg-orange-500 h-2 rounded-full"
                                       style={{
-                                        width: `${institutionSummary.totals.projects > 0 ? (institutionSummary.totals.completedProjects / institutionSummary.totals.projects) * 100 : 0}%`
+                                        width: `${
+                                          institutionSummary.totals.projects > 0
+                                            ? (institutionSummary.totals
+                                                .completedProjects /
+                                                institutionSummary.totals
+                                                  .projects) *
+                                              100
+                                            : 0
+                                        }%`,
                                       }}
                                     ></div>
                                   </div>
@@ -2507,213 +2824,26 @@ export default function InstitutionsPage() {
                             {/* Institution Timeline */}
                             <div className="grid md:grid-cols-2 gap-4 text-sm border-t pt-4">
                               <div>
-                                <div className="text-gray-600 mb-1">Created</div>
+                                <div className="text-gray-600 mb-1">
+                                  Created
+                                </div>
                                 <div className="font-medium">
-                              {formatDate(selectedInstitution.createdAt)}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-gray-600 mb-1">
-                              Last Updated
-                            </div>
+                                  {formatDate(selectedInstitution.createdAt)}
+                                </div>
+                              </div>
+                              <div>
+                                <div className="text-gray-600 mb-1">
+                                  Last Updated
+                                </div>
                                 <div className="font-medium">
-                              {formatDate(selectedInstitution.updatedAt)}
-                            </div>
-                          </div>
-                        </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                          </div>
-                        )}
-                      </AccordionSection>
-
-                      <AccordionSection title="Details" defaultOpen>
-                        {statsLoading ? (
-                          <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                          </div>
-                        ) : institutionStats ? (
-                          <div className="space-y-8">
-                            {/* Totals Overview */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-4">Institution Totals</h4>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-blue-600">{institutionStats.totals.students}</div>
-                                  <div className="text-xs text-gray-600">Students</div>
+                                  {formatDate(selectedInstitution.updatedAt)}
                                 </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-green-600">{institutionStats.totals.quizzes}</div>
-                                  <div className="text-xs text-gray-600">Quizzes</div>
-                                </div>
-                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-yellow-600">{institutionStats.totals.exams}</div>
-                                  <div className="text-xs text-gray-600">Exams</div>
-                                </div>
-                                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-purple-600">{institutionStats.totals.projects}</div>
-                                  <div className="text-xs text-gray-600">Projects</div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Class & Section Breakdown */}
-                            <div className="grid md:grid-cols-2 gap-6">
-                              {/* By Class */}
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-900 mb-3">Students by Class</h4>
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                  {institutionStats.breakdown.byClass.map((classItem) => (
-                                    <div key={classItem.standardId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                                      <span className="text-sm text-gray-900">{classItem.standardName}</span>
-                                      <Badge variant="secondary">{classItem._count._all} students</Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* By Section */}
-                              <div>
-                                <h4 className="text-sm font-medium text-gray-900 mb-3">Students by Section</h4>
-                                <div className="space-y-2 max-h-48 overflow-y-auto">
-                                  {institutionStats.breakdown.bySection.map((sectionItem) => (
-                                    <div key={sectionItem.sectionId} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                                      <span className="text-sm text-gray-900">{sectionItem.sectionName}</span>
-                                      <Badge variant="secondary">{sectionItem._count._all} students</Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Grade Strength */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-3">Grade Strength</h4>
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                {institutionStats.breakdown.gradesWithStrength.map((grade) => (
-                                  <div key={grade.standardId} className="text-center p-3 bg-gray-50 rounded-md">
-                                    <div className="text-lg font-bold text-gray-900">{grade.strength}</div>
-                                    <div className="text-xs text-gray-600">{grade.grade}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Section Strength */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-3">Section Strength</h4>
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                                {institutionStats.breakdown.sectionsWithStrength.map((section) => (
-                                  <div key={section.sectionId} className="text-center p-3 bg-gray-50 rounded-md">
-                                    <div className="text-lg font-bold text-gray-900">{section.strength}</div>
-                                    <div className="text-xs text-gray-600">{section.section} - {section.standardId.slice(-4)}</div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Assigned Content */}
-                            <div className="space-y-6">
-                              <h4 className="text-sm font-medium text-gray-900">Assigned Content</h4>
-
-                              {/* Exams by Subject */}
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-3">Exams by Subject</h5>
-                                <div className="space-y-2 max-h-32 overflow-y-auto">
-                                  {institutionStats.assigned.exams.bySchoolSubject.slice(0, 10).map((subject) => (
-                                    <div key={subject.subject} className="flex justify-between items-center p-2 bg-blue-50 rounded-md">
-                                      <span className="text-sm text-gray-900 truncate mr-2">{subject.subject}</span>
-                                      <Badge variant="outline" className="bg-blue-100 text-blue-700">{subject.count}</Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Quizzes by Subject */}
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-3">Quizzes by Subject</h5>
-                                <div className="space-y-2 max-h-32 overflow-y-auto">
-                                  {institutionStats.assigned.quizzes.bySchoolSubject.slice(0, 10).map((subject) => (
-                                    <div key={subject.subject} className="flex justify-between items-center p-2 bg-green-50 rounded-md">
-                                      <span className="text-sm text-gray-900 truncate mr-2">{subject.subject}</span>
-                                      <Badge variant="outline" className="bg-green-100 text-green-700">{subject.count}</Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Recent Student Performance */}
-                            <div className="space-y-6">
-                              <h4 className="text-sm font-medium text-gray-900">Recent Student Performance</h4>
-
-                              {/* Recent Exams */}
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-3">Latest Exam Results</h5>
-                                <div className="space-y-2 max-h-40 overflow-y-auto">
-                                  {institutionStats.studentAnalytics.examsLast3.slice(0, 5).map((exam, index) => (
-                                    <div key={`${exam.studentId}-${exam.examId}-${index}`} className="flex justify-between items-center p-3 bg-yellow-50 rounded-md">
-                                      <div>
-                                        <div className="text-sm font-medium text-gray-900">{exam.standardName} - {exam.sectionName}</div>
-                                        <div className="text-xs text-gray-600">Score: {exam.score !== null ? exam.score : 'N/A'}</div>
-                                      </div>
-                                      <Badge variant="outline" className="bg-yellow-100 text-yellow-700">Exam {exam.rn}</Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Recent Quizzes */}
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-3">Latest Quiz Results</h5>
-                                <div className="space-y-2 max-h-40 overflow-y-auto">
-                                  {institutionStats.studentAnalytics.quizzesLast3.slice(0, 5).map((quiz, index) => (
-                                    <div key={`${quiz.studentId}-${index}`} className="flex justify-between items-center p-3 bg-purple-50 rounded-md">
-                                      <div>
-                                        <div className="text-sm font-medium text-gray-900">{quiz.standardName} - {quiz.sectionName}</div>
-                                        <div className="text-xs text-gray-600">Score: {quiz.score}/{quiz.totalQuestions}</div>
-                                      </div>
-                                      <Badge variant="outline" className="bg-purple-100 text-purple-700">Quiz {quiz.rn}</Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-
-                              {/* Recent Projects */}
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-3">Latest Project Status</h5>
-                                <div className="space-y-2 max-h-40 overflow-y-auto">
-                                  {institutionStats.studentAnalytics.projectsLast3.slice(0, 5).map((project, index) => (
-                                    <div key={`${project.studentId}-${index}`} className="flex justify-between items-center p-3 bg-indigo-50 rounded-md">
-                                      <div>
-                                        <div className="text-sm font-medium text-gray-900">{project.standardName} - {project.sectionName}</div>
-                                        <div className="text-xs text-gray-600">Status: {project.isCompleted ? 'Completed' : 'In Progress'}</div>
-                                      </div>
-                                      <Badge variant="outline" className="bg-indigo-100 text-indigo-700">Project {project.rn}</Badge>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Growth Analytics */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-3">Student Growth (Monthly)</h4>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                {institutionStats.growth.studentsByMonth.map((month) => (
-                                  <div key={month.month} className="text-center p-3 bg-orange-50 rounded-md">
-                                    <div className="text-lg font-bold text-orange-600">{month.count}</div>
-                                    <div className="text-xs text-gray-600">{month.month}</div>
-                                  </div>
-                                ))}
                               </div>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-center justify-center py-8">
-                            <div className="text-sm text-gray-500">No detailed statistics available</div>
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
                           </div>
                         )}
                       </AccordionSection>
@@ -2741,14 +2871,12 @@ export default function InstitutionsPage() {
             <DialogTitle>
               {institutionToApprove?.approvalStatus === "PENDING"
                 ? "Institution Approval"
-                : "Institution Status"
-              }
+                : "Institution Status"}
             </DialogTitle>
             <DialogDescription>
               {institutionToApprove?.approvalStatus === "PENDING"
                 ? `Choose an action for ${institutionToApprove?.name}. This action cannot be undone.`
-                : `Current status: ${institutionToApprove?.approvalStatus}. Click to change status.`
-              }
+                : `Current status: ${institutionToApprove?.approvalStatus}. Click to change status.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 mt-6">
@@ -2782,18 +2910,25 @@ export default function InstitutionsPage() {
               </>
             ) : (
               <Button
-                onClick={() => handleInstitutionApproval(
-                  institutionToApprove?.approvalStatus === "APPROVED" ? "REJECT" : "APPROVE"
-                )}
-                variant={institutionToApprove?.approvalStatus === "APPROVED" ? "destructive" : "default"}
+                onClick={() =>
+                  handleInstitutionApproval(
+                    institutionToApprove?.approvalStatus === "APPROVED"
+                      ? "REJECT"
+                      : "APPROVE"
+                  )
+                }
+                variant={
+                  institutionToApprove?.approvalStatus === "APPROVED"
+                    ? "destructive"
+                    : "default"
+                }
                 disabled={createLoading}
               >
                 {createLoading
                   ? "Processing..."
                   : institutionToApprove?.approvalStatus === "APPROVED"
-                    ? "Reject"
-                    : "Approve"
-                }
+                  ? "Reject"
+                  : "Approve"}
               </Button>
             )}
           </DialogFooter>
@@ -2806,7 +2941,9 @@ export default function InstitutionsPage() {
           <DialogHeader>
             <DialogTitle>Suspend Institution</DialogTitle>
             <DialogDescription>
-              Are you sure you want to suspend {institutionToSuspend?.name}? This action will temporarily disable the institution and can be reversed later.
+              Are you sure you want to suspend {institutionToSuspend?.name}?
+              This action will temporarily disable the institution and can be
+              reversed later.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex gap-2 mt-6">

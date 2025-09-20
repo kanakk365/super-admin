@@ -40,6 +40,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import { handleApiError, apiClient } from "@/lib/api";
 import type {
@@ -147,6 +155,14 @@ export default function InstitutionsPage() {
     pending: 0,
     rejected: 0,
   });
+
+  // Modal state for approval/rejection
+  const [approvalModalOpen, setApprovalModalOpen] = useState(false);
+  const [institutionToApprove, setInstitutionToApprove] = useState<Institution | null>(null);
+
+  // Modal state for suspension
+  const [suspendModalOpen, setSuspendModalOpen] = useState(false);
+  const [institutionToSuspend, setInstitutionToSuspend] = useState<Institution | null>(null);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -594,6 +610,92 @@ export default function InstitutionsPage() {
       }
     } catch (err) {
       console.error("Error updating institution:", err);
+      setError(handleApiError(err));
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // Handle institution approval/rejection
+  const handleInstitutionApproval = async (action: "APPROVE" | "REJECT") => {
+    if (!institutionToApprove) return;
+
+    try {
+      setCreateLoading(true);
+      setError("");
+
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+      const token = localStorage.getItem("authToken");
+
+      const response = await fetch(`${baseURL}/super-admin/institutions/approval`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: institutionToApprove.id,
+          action: action,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Refresh institutions list
+        await fetchInstitutions();
+
+        // Close modal and reset state
+        setApprovalModalOpen(false);
+        setInstitutionToApprove(null);
+      } else {
+        setError(data.message || `Failed to ${action.toLowerCase()} institution`);
+      }
+    } catch (err) {
+      console.error(`Error ${action.toLowerCase()}ing institution:`, err);
+      setError(handleApiError(err));
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // Handle institution suspension
+  const handleInstitutionSuspension = async (suspend: boolean) => {
+    if (!institutionToSuspend) return;
+
+    try {
+      setCreateLoading(true);
+      setError("");
+
+      const baseURL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000";
+      const token = localStorage.getItem("authToken");
+
+      const response = await fetch(`${baseURL}/super-admin/institutions/suspend`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: institutionToSuspend.id,
+          suspend: suspend,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Refresh institutions list
+        await fetchInstitutions();
+
+        // Close modal and reset state
+        setSuspendModalOpen(false);
+        setInstitutionToSuspend(null);
+      } else {
+        setError(data.message || `Failed to ${suspend ? 'suspend' : 'unsuspend'} institution`);
+      }
+    } catch (err) {
+      console.error(`Error ${suspend ? 'suspending' : 'unsuspending'} institution:`, err);
       setError(handleApiError(err));
     } finally {
       setCreateLoading(false);
@@ -1707,17 +1809,31 @@ export default function InstitutionsPage() {
 
                                   {/* Status Column */}
                                   <TableCell className="px-4">
-                                    <Badge
-                                      className={`${
-                                        institution.approvalStatus === "APPROVED"
-                                          ? "bg-transparent text-orange-600 border border-orange-400"
-                                          : institution.approvalStatus === "PENDING"
-                                          ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
-                                          : "bg-red-100 text-red-800 border border-red-400"
-                                      }`}
-                                    >
-                                      {institution.approvalStatus}
-                                    </Badge>
+                                    <div className="flex flex-col gap-1">
+                                      <Badge
+                                        className={`cursor-pointer hover:opacity-80 transition-opacity ${
+                                          institution.approvalStatus === "APPROVED"
+                                            ? "bg-transparent text-orange-600 border border-orange-400"
+                                            : institution.approvalStatus === "PENDING"
+                                            ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
+                                            : "bg-red-100 text-red-800 border border-red-400"
+                                        }`}
+                                        onClick={() => {
+                                          setInstitutionToApprove(institution);
+                                          setApprovalModalOpen(true);
+                                        }}
+                                      >
+                                        {institution.approvalStatus}
+                                      </Badge>
+                                      {institution.isSuspended && (
+                                        <div className="mt-1">
+                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                            <span className="inline-block h-1 w-1 rounded-full bg-red-500 mr-1"></span>
+                                            Suspended
+                                          </span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </TableCell>
 
                                   
@@ -1909,13 +2025,26 @@ export default function InstitutionsPage() {
                           </div> */}
                         </div>
                       </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleInstitutionAction(selectedInstitution.id, "edit")}
-                        className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
-                      >
-                        Edit
-                      </Button>
+                      <div className="flex gap-3">
+                        <Button
+                          size="sm"
+                          onClick={() => handleInstitutionAction(selectedInstitution.id, "edit")}
+                          className="bg-brand-gradient text-white hover:opacity-90 transition-opacity"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setInstitutionToSuspend(selectedInstitution);
+                            setSuspendModalOpen(true);
+                          }}
+                          className="border-red-200 text-red-600 hover:bg-red-50"
+                        >
+                          Suspend
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Accordion sections */}
@@ -1942,6 +2071,14 @@ export default function InstitutionsPage() {
                                     : "bg-red-500"
                                 }`}></span>
                                 {selectedInstitution.approvalStatus}
+                              </div>
+                              <div className="mt-2">
+                                {selectedInstitution.isSuspended && (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500 mr-1"></span>
+                                    Suspended
+                                  </span>
+                                )}
                               </div>
                             </div>
                             <div>
@@ -2496,6 +2633,103 @@ export default function InstitutionsPage() {
           )}
         </>
       )}
+
+      {/* Approval/Rejection Modal */}
+      <Dialog open={approvalModalOpen} onOpenChange={setApprovalModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {institutionToApprove?.approvalStatus === "PENDING"
+                ? "Institution Approval"
+                : "Institution Status"
+              }
+            </DialogTitle>
+            <DialogDescription>
+              {institutionToApprove?.approvalStatus === "PENDING"
+                ? `Choose an action for ${institutionToApprove?.name}. This action cannot be undone.`
+                : `Current status: ${institutionToApprove?.approvalStatus}. Click to change status.`
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApprovalModalOpen(false);
+                setInstitutionToApprove(null);
+              }}
+              disabled={createLoading}
+            >
+              Cancel
+            </Button>
+            {institutionToApprove?.approvalStatus === "PENDING" ? (
+              <>
+                <Button
+                  onClick={() => handleInstitutionApproval("APPROVE")}
+                  variant="default"
+                  disabled={createLoading}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {createLoading ? "Processing..." : "Approve"}
+                </Button>
+                <Button
+                  onClick={() => handleInstitutionApproval("REJECT")}
+                  variant="destructive"
+                  disabled={createLoading}
+                >
+                  {createLoading ? "Processing..." : "Reject"}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => handleInstitutionApproval(
+                  institutionToApprove?.approvalStatus === "APPROVED" ? "REJECT" : "APPROVE"
+                )}
+                variant={institutionToApprove?.approvalStatus === "APPROVED" ? "destructive" : "default"}
+                disabled={createLoading}
+              >
+                {createLoading
+                  ? "Processing..."
+                  : institutionToApprove?.approvalStatus === "APPROVED"
+                    ? "Reject"
+                    : "Approve"
+                }
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Suspension Modal */}
+      <Dialog open={suspendModalOpen} onOpenChange={setSuspendModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Suspend Institution</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to suspend {institutionToSuspend?.name}? This action will temporarily disable the institution and can be reversed later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSuspendModalOpen(false);
+                setInstitutionToSuspend(null);
+              }}
+              disabled={createLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => handleInstitutionSuspension(true)}
+              variant="destructive"
+              disabled={createLoading}
+            >
+              {createLoading ? "Processing..." : "Suspend"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

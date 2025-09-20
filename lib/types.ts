@@ -111,6 +111,7 @@ export interface InstitutionStudent {
   phone: string;
   standardId: string;
   sectionId: string;
+  grade?: string;
   createdAt: string;
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import {
   Plus,
@@ -9,12 +9,8 @@ import {
   X,
   Building2,
   ArrowLeft,
-  ExternalLink,
-  MapPin,
   Phone,
   Mail,
-  Globe,
-  Users,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -193,6 +189,9 @@ export default function InstitutionsPage() {
   const [studentsPage, setStudentsPage] = useState(1);
   const [studentsPageSize] = useState(20);
   const [studentsLoading, setStudentsLoading] = useState(false);
+
+  // Grade filter state
+  const [selectedGrade, setSelectedGrade] = useState<string>("ALL");
 
   const [statusFilter, setStatusFilter] = useState<
     "ALL" | "APPROVED" | "PENDING" | "REJECTED"
@@ -601,6 +600,11 @@ export default function InstitutionsPage() {
     },
     [studentsPageSize]
   );
+
+  // When grade filter changes, reset page client-side only
+  useEffect(() => {
+    setStudentsPage(1);
+  }, [selectedGrade]);
 
   // Handle students page change
   const handleStudentsPageChange = (newPage: number) => {
@@ -2489,7 +2493,7 @@ export default function InstitutionsPage() {
                                 <h4 className="text-sm font-medium text-gray-900">
                                   Students{" "}
                                   {institutionStudents
-                                    ? `(${institutionStudents.meta.total})`
+                                    ? `(${(selectedGrade === "ALL" ? institutionStudents.data : institutionStudents.data.filter((s) => s.grade === selectedGrade)).length})`
                                     : ""}
                                 </h4>
                                 {studentsLoading && (
@@ -2500,41 +2504,96 @@ export default function InstitutionsPage() {
                                 )}
                               </div>
 
+                              {/* Grade Filter */}
+                              <div className="flex items-center gap-2">
+                                <Label htmlFor="grade-filter" className="text-sm font-medium">
+                                  Filter by Grade:
+                                </Label>
+                                <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                                  <SelectTrigger className="w-48 h-11">
+                                    <SelectValue placeholder="Select grade" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ALL">All Grades</SelectItem>
+                                    {institutionStudents && Array.from(new Set(institutionStudents.data.map(student => student.grade).filter((grade): grade is string => Boolean(grade)))).map(grade => (
+                                      <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                {selectedGrade !== "ALL" && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setSelectedGrade("ALL")}
+                                    className="h-11"
+                                  >
+                                    <X className="h-4 w-4" />
+                                    Clear
+                                  </Button>
+                                )}
+                              </div>
+
                               {institutionStudents ? (
                                 <>
                                   <div className="border rounded-lg overflow-hidden">
                                     <Table>
                                       <TableHeader>
-                                        <TableRow className="bg-gray-50">
-                                          <TableHead className="text-xs">
+                                        <TableRow className="bg-brand-gradient text-white">
+                                          <TableHead className="text-white min-w-[200px] px-4">
                                             Name
                                           </TableHead>
-                                          <TableHead className="text-xs">
+                                          <TableHead className="text-white min-w-[200px] px-4">
                                             Email
                                           </TableHead>
-                                          <TableHead className="text-xs">
+                                          <TableHead className="text-white min-w-[150px] px-4">
                                             Phone
                                           </TableHead>
-                                          <TableHead className="text-xs">
+                                          <TableHead className="text-white min-w-[100px] px-4">
+                                            Grade
+                                          </TableHead>
+                                          <TableHead className="text-white min-w-[120px] px-4">
                                             Joined
                                           </TableHead>
                                         </TableRow>
                                       </TableHeader>
                                       <TableBody>
-                                        {institutionStudents.data.map(
+                                        {(selectedGrade === "ALL"
+                                          ? institutionStudents.data
+                                          : institutionStudents.data.filter((s) => s.grade === selectedGrade)
+                                        ).map(
                                           (student) => (
-                                            <TableRow key={student.id}>
-                                              <TableCell className="text-sm">
-                                                {student.firstName}{" "}
-                                                {student.lastName}
+                                            <TableRow
+                                              key={student.id}
+                                              className="hover:bg-gray-50"
+                                            >
+                                              <TableCell className="px-4">
+                                                <div>
+                                                  <h3 className="text-base text-gray-900 mb-1">
+                                                    {student.firstName}{" "}
+                                                    {student.lastName}
+                                                  </h3>
+                                                </div>
                                               </TableCell>
-                                              <TableCell className="text-sm text-gray-600">
-                                                {student.email}
+                                              <TableCell className="px-4">
+                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                  <Mail className="h-4 w-4 flex-shrink-0" />
+                                                  <span className="truncate min-w-0">
+                                                    {student.email}
+                                                  </span>
+                                                </div>
                                               </TableCell>
-                                              <TableCell className="text-sm text-gray-600">
-                                                {student.phone}
+                                              <TableCell className="px-4">
+                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                                                  <Phone className="h-4 w-4 flex-shrink-0" />
+                                                  <span>{student.phone}</span>
+                                                </div>
                                               </TableCell>
-                                              <TableCell className="text-sm text-gray-600">
+                                              <TableCell className="px-4">
+                                                <Badge variant="outline" className="text-xs">
+                                                  {student.grade}
+                                                </Badge>
+                                              </TableCell>
+                                              <TableCell className="px-4 text-sm text-gray-600">
                                                 {formatDate(student.createdAt)}
                                               </TableCell>
                                             </TableRow>

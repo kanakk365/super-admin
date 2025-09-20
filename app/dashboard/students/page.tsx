@@ -184,6 +184,18 @@ export default function StudentsPage() {
       if (selectedInstitutionId) params.set("institutionId", selectedInstitutionId);
       if (selectedStandardId) params.set("standardId", selectedStandardId);
       if (selectedSectionId) params.set("sectionId", selectedSectionId);
+      // Server-side search & status filters
+      if (searchTerm?.trim()) {
+        // Support common param names used across APIs
+        params.set("search", searchTerm.trim());
+        params.set("query", searchTerm.trim());
+      }
+      if (statusFilter !== "ALL") {
+        const isActive = statusFilter === "ACTIVE" ? "true" : "false";
+        // Try both conventions the backend might accept
+        params.set("isActive", isActive);
+        params.set("status", statusFilter);
+      }
 
       const data = await apiClient.get<StudentsResponse>(`/super-admin/users?${params.toString()}`);
 
@@ -212,7 +224,7 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [checkAuth, currentPage, itemsPerPage, selectedInstitutionId, selectedStandardId, selectedSectionId]);
+  }, [checkAuth, currentPage, itemsPerPage, selectedInstitutionId, selectedStandardId, selectedSectionId, searchTerm, statusFilter]);
 
   // Load institutions for filter options
   const loadInstitutions = useCallback(async () => {
@@ -509,42 +521,46 @@ export default function StudentsPage() {
             <div className="space-y-4">
               {/* Filter Buttons */}
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className=" text-lg text-neutral-700 mr-4">
-                  All Students
-                </h1>
+              
                 <Button
-                  variant={statusFilter === "ALL" ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
                   onClick={() => setStatusFilter("ALL")}
-                  className={
-                    statusFilter === "ALL"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
+                  className="rounded-full border-orange-300 hover:border-orange-400"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)',
+                    color: '#B85E00',
+                    borderColor: statusFilter === "ALL" ? '#B85E00' : '#FED7AA',
+                    fontWeight: statusFilter === "ALL" ? '600' : 'normal'
+                  }}
                 >
                   All ({stats.total})
                 </Button>
                 <Button
-                  variant={statusFilter === "ACTIVE" ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
                   onClick={() => setStatusFilter("ACTIVE")}
-                  className={
-                    statusFilter === "ACTIVE"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
+                  className="rounded-full border-orange-300 hover:border-orange-400"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)',
+                    color: '#B85E00',
+                    borderColor: statusFilter === "ACTIVE" ? '#B85E00' : '#FED7AA',
+                    fontWeight: statusFilter === "ACTIVE" ? '600' : 'normal'
+                  }}
                 >
                   Active ({stats.active})
                 </Button>
                 <Button
-                  variant={statusFilter === "INACTIVE" ? "default" : "outline"}
+                  variant="outline"
                   size="sm"
                   onClick={() => setStatusFilter("INACTIVE")}
-                  className={
-                    statusFilter === "INACTIVE"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
+                  className="rounded-full border-orange-300 hover:border-orange-400"
+                  style={{
+                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)',
+                    color: '#B85E00',
+                    borderColor: statusFilter === "INACTIVE" ? '#B85E00' : '#FED7AA',
+                    fontWeight: statusFilter === "INACTIVE" ? '600' : 'normal'
+                  }}
                 >
                   Inactive ({stats.inactive})
                 </Button>
@@ -554,20 +570,6 @@ export default function StudentsPage() {
         </div>
         {viewMode === "list" && (
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            {!showCreateForm && (
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search students..."
-                  className="pl-10 w-full h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
-                  style={{
-                    background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
-                  }}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            )}
             {!showCreateForm && (
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full sm:w-auto">
                 <Select value={selectedInstitutionId} onValueChange={(v) => setSelectedInstitutionId(v)}>
@@ -612,22 +614,38 @@ export default function StudentsPage() {
                 </Select>
               </div>
             )}
-            <Button
-              onClick={() => setShowCreateForm(!showCreateForm)}
-              className="whitespace-nowrap"
-            >
-              {showCreateForm ? (
-                <>
-                  <X className="mr-2 h-4 w-4" />
-                  Cancel
-                </>
-              ) : (
-                <>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Student
-                </>
+            <div className="flex items-center gap-2">
+              {!showCreateForm && (
+                <div className="relative max-w-md">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    placeholder="Search students..."
+                    className="pl-10 w-64 h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                    style={{
+                      background: 'linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)'
+                    }}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
               )}
-            </Button>
+              <Button
+                onClick={() => setShowCreateForm(!showCreateForm)}
+                className="whitespace-nowrap"
+              >
+                {showCreateForm ? (
+                  <>
+                    <X className="mr-2 h-4 w-4" />
+                    Cancel
+                  </>
+                ) : (
+                  <>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Student
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         )}
       </div>

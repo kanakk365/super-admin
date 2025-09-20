@@ -48,6 +48,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 
 import { handleApiError, apiClient } from "@/lib/api";
 import type {
@@ -121,6 +122,37 @@ interface InstitutionFormData {
   password: string;
 }
 
+function AccordionSection({
+  title,
+  children,
+  defaultOpen = false,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="rounded-lg border bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left"
+      >
+        <span className="font-medium text-sm sm:text-base text-gray-900">
+          {title}
+        </span>
+        <ChevronDown
+          className={`h-4 w-4 text-gray-500 transition-transform ${
+            open ? "rotate-180" : "rotate-0"
+          }`}
+        />
+      </button>
+      {open && <div className="px-4 sm:px-6 pb-5">{children}</div>}
+    </div>
+  );
+}
+
 export default function InstitutionsPage() {
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [loading, setLoading] = useState(true);
@@ -140,6 +172,12 @@ export default function InstitutionsPage() {
   const [institutionStats, setInstitutionStats] = useState<InstitutionStatsResponse | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [institutionFeatures, setInstitutionFeatures] = useState<InstitutionFeatureAssignment[] | null>(null);
+
+  // Feature editing state
+  const [featureEdits, setFeatureEdits] = useState<Record<string, boolean>>({});
+  const [featureUpdateLoading, setFeatureUpdateLoading] = useState(false);
+  const [featureUpdateError, setFeatureUpdateError] = useState<string | null>(null);
+  const [featureUpdateSuccess, setFeatureUpdateSuccess] = useState<string | null>(null);
 
   // Students pagination state
   const [studentsPage, setStudentsPage] = useState(1);
@@ -185,36 +223,7 @@ export default function InstitutionsPage() {
     password: "",
   });
 
-  function AccordionSection({
-    title,
-    children,
-    defaultOpen = false,
-  }: {
-    title: string;
-    children: React.ReactNode;
-    defaultOpen?: boolean;
-  }) {
-    const [open, setOpen] = useState(defaultOpen);
-    return (
-      <div className="rounded-lg border bg-white">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="w-full flex items-center justify-between px-4 sm:px-6 py-4 text-left"
-        >
-          <span className="font-medium text-sm sm:text-base text-gray-900">
-            {title}
-          </span>
-          <ChevronDown
-            className={`h-4 w-4 text-gray-500 transition-transform ${
-              open ? "rotate-180" : "rotate-0"
-            }`}
-          />
-        </button>
-        {open && <div className="px-4 sm:px-6 pb-5">{children}</div>}
-      </div>
-    );
-  }
+  
 
   // Fetch institutions from API
   const fetchInstitutions = useCallback(async () => {
@@ -699,6 +708,58 @@ export default function InstitutionsPage() {
       setError(handleApiError(err));
     } finally {
       setCreateLoading(false);
+    }
+  };
+
+  // Handle feature toggle
+  const handleFeatureToggle = (featureId: string, enabled: boolean) => {
+    setFeatureUpdateError(null);
+    setFeatureUpdateSuccess(null);
+
+    setFeatureEdits(prev => ({
+      ...prev,
+      [featureId]: enabled,
+    }));
+  };
+
+  // Handle feature updates save
+  const handleFeatureUpdate = async () => {
+    if (!selectedInstitution || !institutionFeatures) return;
+
+    try {
+      setFeatureUpdateLoading(true);
+      setFeatureUpdateError(null);
+      setFeatureUpdateSuccess(null);
+
+      // Get current states (with edits applied)
+      const updatedFeatures = institutionFeatures.map(assignment => ({
+        key: assignment.feature.key,
+        enabled: featureEdits[assignment.id] ?? assignment.enabled,
+      }));
+
+      const response = await apiClient.assignInstitutionFeatures({
+        institutionId: selectedInstitution.id,
+        features: updatedFeatures,
+      });
+
+      if (!response.success) {
+        throw new Error('Failed to update features');
+      }
+
+      setFeatureUpdateSuccess(response.data?.message || 'Features updated successfully');
+
+      // Refresh institution features
+      const refreshed = await apiClient.getInstitutionFeatures(selectedInstitution.id);
+      if (refreshed.success && refreshed.data) {
+        setInstitutionFeatures(refreshed.data);
+      }
+
+      // Clear edits
+      setFeatureEdits({});
+    } catch (err) {
+      setFeatureUpdateError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setFeatureUpdateLoading(false);
     }
   };
 
@@ -2122,32 +2183,71 @@ export default function InstitutionsPage() {
                       </AccordionSection>
 
                       <AccordionSection title="Assigned Features">
+                        {/* Update status messages */}
+                        {featureUpdateError && (
+                          <div className="mb-4 text-center text-sm text-red-600 bg-red-50 p-2 rounded" onClick={(e) => e.stopPropagation()}>
+                            {featureUpdateError}
+                          </div>
+                        )}
+                        {featureUpdateSuccess && (
+                          <div className="mb-4 text-center text-sm text-green-700 bg-green-50 p-2 rounded" onClick={(e) => e.stopPropagation()}>
+                            {featureUpdateSuccess}
+                          </div>
+                        )}
+
                         {institutionFeatures ? (
                           institutionFeatures.length > 0 ? (
-                            <div className="rounded-lg border overflow-hidden">
-                              <div className="overflow-x-auto">
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow className="bg-gray-50">
-                                      <TableHead className="text-xs">Feature</TableHead>
-                                      <TableHead className="text-xs">Description</TableHead>
-                                      <TableHead className="text-xs text-right">Enabled</TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody>
-                                    {institutionFeatures.map((assignment) => (
-                                      <TableRow key={assignment.id}>
-                                        <TableCell className="text-sm">{assignment.feature.name}</TableCell>
-                                        <TableCell className="text-sm text-gray-600">{assignment.feature.description}</TableCell>
-                                        <TableCell className="text-sm text-right">
-                                          <Badge className={assignment.enabled ? "bg-green-100 text-green-700 border border-green-400" : "bg-gray-100 text-gray-700 border"}>
-                                            {assignment.enabled ? "Yes" : "No"}
-                                          </Badge>
-                                        </TableCell>
+                            <div className="space-y-4">
+                              <div className="rounded-lg border overflow-hidden">
+                                <div className="overflow-x-auto">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="bg-gray-50">
+                                        <TableHead className="text-xs">Feature</TableHead>
+                                        <TableHead className="text-xs">Description</TableHead>
+                                        <TableHead className="text-xs text-right">Enabled</TableHead>
                                       </TableRow>
-                                    ))}
-                                  </TableBody>
-                                </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {institutionFeatures.map((assignment) => (
+                                        <TableRow key={assignment.id}>
+                                          <TableCell className="text-sm">{assignment.feature.name}</TableCell>
+                                          <TableCell className="text-sm text-gray-600">{assignment.feature.description}</TableCell>
+                                          <TableCell className="text-sm text-right">
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                              <Switch
+                                                checked={featureEdits[assignment.id] ?? assignment.enabled}
+                                                onCheckedChange={(checked) =>
+                                                  handleFeatureToggle(assignment.id, !!checked)
+                                                }
+                                                disabled={featureUpdateLoading}
+                                                aria-label={`${assignment.feature.name} status`}
+                                              />
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+
+                              {/* Save button */}
+                              <div className="flex items-center justify-end gap-3" onClick={(e) => e.stopPropagation()}>
+                                <Button
+                                  variant="outline"
+                                  onClick={() => setFeatureEdits({})}
+                                  disabled={featureUpdateLoading || Object.keys(featureEdits).length === 0}
+                                >
+                                  Reset Changes
+                                </Button>
+                                <Button
+                                  variant="default"
+                                  onClick={handleFeatureUpdate}
+                                  disabled={featureUpdateLoading || Object.keys(featureEdits).length === 0}
+                                >
+                                  {featureUpdateLoading ? 'Updating...' : 'Update Features'}
+                                </Button>
                               </div>
                             </div>
                           ) : (

@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +54,7 @@ import type {
   InstitutionStudentsBreakdownResponse,
   InstitutionStatsResponse,
   InstitutionFeatureAssignment,
+  InstitutionMode,
 } from "@/lib/types";
 
 interface Institution {
@@ -77,6 +79,7 @@ interface Institution {
   createdAt: string;
   updatedAt: string;
   addedById: string;
+  mode?: InstitutionMode | null;
 }
 
 interface InstitutionsResponse {
@@ -117,6 +120,8 @@ interface InstitutionFormData {
   secondaryColor: string;
   password: string;
 }
+
+const MODE_OPTIONS: InstitutionMode[] = ["GPT", "CBSE", "CAMBRIDGE"];
 
 function AccordionSection({
   title,
@@ -184,6 +189,15 @@ export default function InstitutionsPage() {
   const [featureUpdateSuccess, setFeatureUpdateSuccess] = useState<
     string | null
   >(null);
+
+  // Mode switching state
+  const [modeUpdateLoading, setModeUpdateLoading] = useState(false);
+  const [modeUpdateError, setModeUpdateError] = useState<string | null>(null);
+  const [modeUpdateSuccess, setModeUpdateSuccess] = useState<string | null>(
+    null
+  );
+
+  const currentMode = selectedInstitution?.mode ?? null;
 
   // Students pagination state
   const [studentsPage, setStudentsPage] = useState(1);
@@ -446,6 +460,9 @@ export default function InstitutionsPage() {
   ) => {
     switch (action) {
       case "view":
+        setModeUpdateError(null);
+        setModeUpdateSuccess(null);
+        setModeUpdateLoading(false);
         try {
           setLoading(true);
           setError("");
@@ -794,6 +811,61 @@ export default function InstitutionsPage() {
     }));
   };
 
+  const handleModeChange = async (mode: InstitutionMode) => {
+    if (!selectedInstitution || modeUpdateLoading) {
+      return;
+    }
+
+    if (currentMode === mode) {
+      setModeUpdateError(null);
+      setModeUpdateSuccess(null);
+      return;
+    }
+
+    const institutionId = selectedInstitution.id;
+
+    try {
+      setModeUpdateLoading(true);
+      setModeUpdateError(null);
+      setModeUpdateSuccess(null);
+
+      const response = await apiClient.switchInstitutionMode(
+        institutionId,
+        mode
+      );
+
+      if (response.success) {
+        const updatedMode = response.data?.mode ?? mode;
+
+        setSelectedInstitution((prev) =>
+          prev && prev.id === institutionId
+            ? { ...prev, mode: updatedMode }
+            : prev
+        );
+
+        setInstitutions((prev) =>
+          prev.map((institution) =>
+            institution.id === institutionId
+              ? { ...institution, mode: updatedMode }
+              : institution
+          )
+        );
+
+        setModeUpdateSuccess(
+          response.message || "Institution mode updated successfully."
+        );
+      } else {
+        setModeUpdateError(
+          response.message || "Failed to update institution mode."
+        );
+      }
+    } catch (err) {
+      setModeUpdateError(handleApiError(err));
+    } finally {
+      setModeUpdateLoading(false);
+    }
+  };
+
   // Handle feature updates save
   const handleFeatureUpdate = async () => {
     if (!selectedInstitution || !institutionFeatures) return;
@@ -851,8 +923,23 @@ export default function InstitutionsPage() {
     setStudentsPage(1);
     setStudentsLoading(false);
     setStatsLoading(false);
+    setModeUpdateError(null);
+    setModeUpdateSuccess(null);
+    setModeUpdateLoading(false);
     setViewMode("list");
   };
+
+  useEffect(() => {
+    if (!modeUpdateSuccess) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setModeUpdateSuccess(null);
+    }, 3000);
+
+    return () => window.clearTimeout(timeout);
+  }, [modeUpdateSuccess]);
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -2305,6 +2392,86 @@ export default function InstitutionsPage() {
                               </div>
                             </div>
                           </div>
+                        </div>
+                      </AccordionSection>
+
+                      <AccordionSection title="Mode Settings">
+                        <div className="space-y-4">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-gray-700">
+                              Current mode:
+                            </span>
+                            <Badge variant="secondary">
+                              {currentMode ?? "Not set"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            Choose the curriculum mode to align content and assessments for this institution.
+                          </p>
+                          <div className="flex flex-wrap gap-3">
+                            {MODE_OPTIONS.map((modeOption) => {
+                              const isActive = currentMode === modeOption;
+
+                              return (
+                                <label
+                                  key={modeOption}
+                                  className={`relative flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors ${
+                                    isActive
+                                      ? "border-orange-500 bg-orange-50 text-orange-600"
+                                      : "border-gray-200 bg-white text-gray-700 hover:border-orange-300"
+                                  } ${
+                                    modeUpdateLoading
+                                      ? "opacity-70 cursor-not-allowed"
+                                      : "cursor-pointer"
+                                  }`}
+                                >
+                                  <input
+                                    type="radio"
+                                    name="institution-mode"
+                                    value={modeOption}
+                                    checked={isActive}
+                                    onChange={() => handleModeChange(modeOption)}
+                                    disabled={modeUpdateLoading}
+                                    className="sr-only"
+                                  />
+                                  <span
+                                    className={`flex h-4 w-4 items-center justify-center rounded-full border ${
+                                      isActive
+                                        ? "border-orange-500"
+                                        : "border-gray-300"
+                                    }`}
+                                  >
+                                    <span
+                                      className={`h-2 w-2 rounded-full ${
+                                        isActive
+                                          ? "bg-orange-500"
+                                          : "bg-transparent"
+                                      }`}
+                                    />
+                                  </span>
+                                  <span className="text-sm font-medium">
+                                    {modeOption}
+                                  </span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                          {modeUpdateLoading && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Updating mode...
+                            </div>
+                          )}
+                          {modeUpdateError && (
+                            <div className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 rounded-md">
+                              {modeUpdateError}
+                            </div>
+                          )}
+                          {modeUpdateSuccess && (
+                            <div className="text-sm text-green-600 bg-green-50 border border-green-100 px-3 py-2 rounded-md">
+                              {modeUpdateSuccess}
+                            </div>
+                          )}
                         </div>
                       </AccordionSection>
 

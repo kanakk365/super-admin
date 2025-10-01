@@ -78,6 +78,8 @@ export interface Activity {
 }
 
 // Institution Types
+export type InstitutionMode = "GPT" | "CBSE" | "CAMBRIDGE";
+
 export interface Institution {
   id: string;
   name: string;
@@ -100,6 +102,7 @@ export interface Institution {
   createdAt: string;
   updatedAt: string;
   addedById: string;
+  mode?: InstitutionMode | null;
 }
 
 // Institution Detail API Response Types

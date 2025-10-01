@@ -47,6 +47,7 @@ import type {
   Member,
   Feature,
   InstitutionFeatureAssignment,
+  InstitutionMode,
 } from "./types";
 
 // API Helper Functions
@@ -268,6 +269,16 @@ class ApiClient {
     features: Array<{ key: string; enabled: boolean }>;
   }): Promise<ApiResponse<{ message: string }>> {
     return this.post<ApiResponse<{ message: string }>>('/super-admin/institutions/assign-features', data);
+  }
+
+  async switchInstitutionMode(
+    institutionId: string,
+    mode: InstitutionMode,
+  ): Promise<ApiResponse<{ mode: InstitutionMode }>> {
+    return this.post<ApiResponse<{ mode: InstitutionMode }>>(
+      `/super-admin/institutions/${institutionId}/switch`,
+      { mode },
+    );
   }
 
   // Roles API methods

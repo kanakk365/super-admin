@@ -208,8 +208,8 @@ export default function InstitutionsPage() {
   const [selectedGrade, setSelectedGrade] = useState<string>("ALL");
 
   const [statusFilter, setStatusFilter] = useState<
-    "ALL" | "APPROVED" | "PENDING" | "REJECTED"
-  >("ALL");
+    "APPROVED" | "PENDING" | "REJECTED"
+  >("APPROVED");
   const [stats, setStats] = useState<InstitutionStats>({
     total: 0,
     approved: 0,
@@ -423,8 +423,7 @@ export default function InstitutionsPage() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "ALL" || institution.approvalStatus === statusFilter;
+    const matchesStatus = institution.approvalStatus === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
@@ -989,18 +988,6 @@ export default function InstitutionsPage() {
                 <h1 className=" text-lg text-neutral-700 mr-4">
                   All Institutions
                 </h1>
-                <Button
-                  variant={statusFilter === "ALL" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("ALL")}
-                  className={
-                    statusFilter === "ALL"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
-                >
-                  All ({stats.total})
-                </Button>
                 <Button
                   variant={statusFilter === "PENDING" ? "default" : "outline"}
                   size="sm"
@@ -1932,15 +1919,15 @@ export default function InstitutionsPage() {
                     {filteredInstitutions.length === 0 ? (
                       <div className="text-center py-12">
                         <p className="text-muted-foreground">
-                          {searchTerm || statusFilter !== "ALL"
+                          {searchTerm || statusFilter !== "APPROVED"
                             ? `No institutions found matching ${
                                 searchTerm ? "your search" : ""
                               }${
-                                searchTerm && statusFilter !== "ALL"
+                                searchTerm && statusFilter !== "APPROVED"
                                   ? " and "
                                   : ""
                               }${
-                                statusFilter !== "ALL"
+                                statusFilter !== "APPROVED"
                                   ? `status "${statusFilter.toLowerCase()}"`
                                   : ""
                               }.`

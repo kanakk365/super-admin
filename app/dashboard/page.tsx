@@ -34,7 +34,6 @@ interface DashboardStats {
   totalInstitutions: number;
   totalBlogs: number;
   activeFeatures: number; // placeholder until real endpoint
-  revenue: number; // monthly revenue placeholder
   studentGrowth: number;
   institutionGrowth: number;
   blogGrowth: number;
@@ -50,7 +49,6 @@ export default function Dashboard() {
     totalInstitutions: 0,
     totalBlogs: 0,
     activeFeatures: 0,
-    revenue: 0,
     studentGrowth: 0,
     institutionGrowth: 0,
     blogGrowth: 0,
@@ -240,15 +238,12 @@ export default function Dashboard() {
 
       // Fixed active features count
       const activeFeatures = 8;
-      // Fixed revenue (set to 0 as requested)
-      const revenue = 0;
 
       setStats({
         totalStudents: studentCount,
         totalInstitutions: institutionCount,
         totalBlogs: blogCount,
         activeFeatures,
-        revenue,
         studentGrowth,
         institutionGrowth,
         blogGrowth,
@@ -357,89 +352,75 @@ export default function Dashboard() {
         {/* Stats Grid (4 cards) */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* Institutions */}
-          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full flex items-center justify-center  ">
-                <Image
-                  src="/ins.svg"
-                  alt="Institutions"
-                  width={28}
-                  height={28}
-                  className="h-7 w-7"
-                />
-              </div>
-              <div>
-                <p className="text-2xl text-neutral-600 font-semibold  ">
-                  {stats.totalInstitutions.toLocaleString()}+
-                </p>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Institutions
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <Link href="/dashboard/institutions">
+            <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full flex items-center justify-center  ">
+                  <Image
+                    src="/ins.svg"
+                    alt="Institutions"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7"
+                  />
+                </div>
+                <div>
+                  <p className="text-2xl text-neutral-600 font-semibold  ">
+                    {stats.totalInstitutions.toLocaleString()}+
+                  </p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                    Institutions
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
           {/* Students */}
-          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="h-12 w-12 rounded-full flex items-center justify-center bg-amber-50">
+          <Link href="/dashboard/students">
+            <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full flex items-center justify-center bg-amber-50">
+                  <Image
+                    src="/students.svg"
+                    alt="Institutions"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7"
+                  />
+                </div>
+                <div>
+                  <p className="text-2xl text-neutral-600 font-semibold ">
+                    {stats.totalStudents.toLocaleString()}+
+                  </p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                    Students
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+          {/* Active Features */}
+          <Link href="/dashboard/assignfeatures">
+            <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
                 <Image
-                  src="/students.svg"
+                  src="/active.svg"
                   alt="Institutions"
                   width={28}
                   height={28}
                   className="h-7 w-7"
                 />
-              </div>
-              <div>
-                <p className="text-2xl text-neutral-600 font-semibold ">
-                  {stats.totalStudents.toLocaleString()}+
-                </p>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Students
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          {/* Active Features */}
-          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <Image
-                src="/active.svg"
-                alt="Institutions"
-                width={28}
-                height={28}
-                className="h-7 w-7"
-              />
-              <div>
-                <p className="text-2xl text-neutral-600 font-semibold ">
-                  {stats.activeFeatures.toLocaleString()}+
-                </p>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Active Features
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-          {/* Revenue */}
-          <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <Image
-                src="/revenue.svg"
-                alt="Institutions"
-                width={28}
-                height={28}
-                className="h-7 w-7"
-              />
-              <div>
-                <p className="text-2xl text-neutral-600 font-semibold ">
-                  ₹{stats.revenue.toLocaleString()}
-                </p>
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
-                  Revenue
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                <div>
+                  <p className="text-2xl text-neutral-600 font-semibold ">
+                    {stats.activeFeatures.toLocaleString()}+
+                  </p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+                    Active Features
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
         {/* User Registration Chart */}

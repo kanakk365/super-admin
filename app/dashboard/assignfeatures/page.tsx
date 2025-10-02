@@ -54,6 +54,14 @@ export default function AssignFeaturesPage() {
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
 
+  // Overall features update states
+  const [overallUpdateLoading, setOverallUpdateLoading] = useState<boolean>(false);
+  const [overallUpdateError, setOverallUpdateError] = useState<string | null>(null);
+  const [overallUpdateSuccess, setOverallUpdateSuccess] = useState<string | null>(null);
+
+  // Overall features local overrides
+  const [overallFeatureOverrides, setOverallFeatureOverrides] = useState<Record<string, boolean>>({});
+
   // Fetch institutions on component mount
   useEffect(() => {
     const fetchInstitutions = async () => {
@@ -148,6 +156,15 @@ export default function AssignFeaturesPage() {
     return defaults;
   }, [institutionFeatureAssignments, allFeatures, viewMode]);
 
+  // Overall feature states with local overrides
+  const overallFeatureStates = useMemo(() => {
+    const states = { ...originalFeatureStates };
+    Object.entries(overallFeatureOverrides).forEach(([key, enabled]) => {
+      states[key] = enabled;
+    });
+    return states;
+  }, [originalFeatureStates, overallFeatureOverrides]);
+
   // Current states are overrides if present, else original defaults
   const currentFeatureStatesForSelected = useMemo(() => {
     return featureOverrides[selectedInstitutionId] ?? originalFeatureStates;
@@ -168,19 +185,29 @@ export default function AssignFeaturesPage() {
   }, [featureOverrides, selectedInstitutionId, originalFeatureStates, allFeatures]);
 
   const handleToggle = (featureKey: string, checked: boolean) => {
-    // Only allow toggling in institution view mode
-    if (viewMode === 'overall' || !selectedInstitutionId) return;
-
     setUpdateError(null);
     setUpdateSuccess(null);
+    setOverallUpdateError(null);
+    setOverallUpdateSuccess(null);
 
-    const currentFeatures = featureOverrides[selectedInstitutionId] ?? originalFeatureStates;
-    const updatedFeatures = { ...currentFeatures, [featureKey]: checked };
+    if (viewMode === 'overall') {
+      // Handle overall feature toggle
+      setOverallFeatureOverrides((prev) => ({
+        ...prev,
+        [featureKey]: checked,
+      }));
+    } else {
+      // Handle institution feature toggle (existing logic)
+      if (!selectedInstitutionId) return;
 
-    setFeatureOverrides((prev) => ({
-      ...prev,
-      [selectedInstitutionId]: updatedFeatures,
-    }));
+      const currentFeatures = featureOverrides[selectedInstitutionId] ?? originalFeatureStates;
+      const updatedFeatures = { ...currentFeatures, [featureKey]: checked };
+
+      setFeatureOverrides((prev) => ({
+        ...prev,
+        [selectedInstitutionId]: updatedFeatures,
+      }));
+    }
   };
 
   const handleUpdate = async () => {
@@ -218,6 +245,48 @@ export default function AssignFeaturesPage() {
       setUpdateError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setUpdateLoading(false);
+    }
+  };
+
+  const handleOverallUpdate = async () => {
+    try {
+      setOverallUpdateLoading(true);
+      setOverallUpdateError(null);
+      setOverallUpdateSuccess(null);
+
+      // Update each modified feature
+      const featuresToUpdate = Object.entries(overallFeatureOverrides);
+      if (featuresToUpdate.length === 0) return;
+
+      for (const [featureKey, enabled] of featuresToUpdate) {
+        const feature = allFeatures.find(f => f.key === featureKey);
+        if (!feature) continue;
+
+        const response = await apiClient.updateOverallFeatures({
+          key: featureKey,
+          name: feature.name,
+          description: feature.description,
+        });
+
+        if (!response.success) {
+          throw new Error(`Failed to update feature ${feature.name}`);
+        }
+      }
+
+      setOverallUpdateSuccess('All features updated successfully');
+
+      // Refresh features to get updated states
+      const refreshed = await apiClient.getFeatures();
+      if (refreshed.success && refreshed.data) {
+        setAllFeatures(refreshed.data);
+      }
+
+      // Clear overrides
+      setOverallFeatureOverrides({});
+    } catch (err) {
+      setOverallUpdateError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setOverallUpdateLoading(false);
     }
   };
 
@@ -352,6 +421,16 @@ export default function AssignFeaturesPage() {
               {updateSuccess}
             </div>
           )}
+          {overallUpdateError && viewMode === 'overall' && (
+            <div className="text-center text-sm text-red-600 bg-red-50 p-2 rounded">
+              {overallUpdateError}
+            </div>
+          )}
+          {overallUpdateSuccess && viewMode === 'overall' && (
+            <div className="text-center text-sm text-green-700 bg-green-50 p-2 rounded">
+              {overallUpdateSuccess}
+            </div>
+          )}
 
           {/* Institution Selector - only show when in institution view */}
           {viewMode === 'institution' && (
@@ -406,12 +485,17 @@ export default function AssignFeaturesPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <Switch
-                          checked={!!currentFeatureStatesForSelected[f.key]}
+                          checked={
+                            viewMode === 'overall'
+                              ? !!overallFeatureStates[f.key]
+                              : !!currentFeatureStatesForSelected[f.key]
+                          }
                           onCheckedChange={(checked) =>
                             handleToggle(f.key, !!checked)
                           }
                           disabled={
-                            viewMode === 'overall' || updateLoading
+                            (viewMode === 'overall' && overallUpdateLoading) ||
+                            (viewMode === 'institution' && updateLoading)
                           }
                           aria-label={`${f.name} status`}
                         />
@@ -430,6 +514,17 @@ export default function AssignFeaturesPage() {
                     disabled={!hasUnsavedChanges || updateLoading}
                   >
                     {updateLoading ? 'Updating...' : 'Update'}
+                  </Button>
+                </div>
+              )}
+              {viewMode === 'overall' && (
+                <div className="mt-4 flex items-center justify-end gap-3">
+                  <Button
+                    variant="default"
+                    onClick={handleOverallUpdate}
+                    disabled={Object.keys(overallFeatureOverrides).length === 0 || overallUpdateLoading}
+                  >
+                    {overallUpdateLoading ? 'Updating...' : 'Update Features'}
                   </Button>
                 </div>
               )}

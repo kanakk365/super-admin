@@ -81,8 +81,8 @@ export default function SuperInstitutionAdminPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [statusFilter, setStatusFilter] = useState<
-    "ALL" | "APPROVED" | "PENDING" | "SUSPENDED" | "REJECTED"
-  >("ALL");
+    "APPROVED" | "PENDING" | "SUSPENDED" | "REJECTED" | null
+  >(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [viewMode, setViewMode] = useState<"list" | "detail" | "edit">("list");
   const [selectedInstitution, setSelectedInstitution] =
@@ -446,7 +446,7 @@ export default function SuperInstitutionAdminPage() {
       institution.email.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesStatus =
-      statusFilter === "ALL" ||
+      !statusFilter ||
       (statusFilter === "APPROVED" && institution.approvalStatus === "APPROVED") ||
       (statusFilter === "PENDING" && institution.approvalStatus === "PENDING") ||
       (statusFilter === "REJECTED" && institution.approvalStatus === "REJECTED") ||
@@ -475,6 +475,12 @@ export default function SuperInstitutionAdminPage() {
   // Handle items per page change
   const handleItemsPerPageChange = (value: string) => {
     setItemsPerPage(parseInt(value));
+  };
+
+  const handleStatusFilterChange = (
+    status: "APPROVED" | "PENDING" | "SUSPENDED" | "REJECTED"
+  ) => {
+    setStatusFilter((prev) => (prev === status ? null : status));
   };
 
   const formatDate = (dateString: string) => {
@@ -576,21 +582,9 @@ export default function SuperInstitutionAdminPage() {
                   All Institutions
                 </h1>
                 <Button
-                  variant={statusFilter === "ALL" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setStatusFilter("ALL")}
-                  className={
-                    statusFilter === "ALL"
-                      ? "bg-brand-gradient text-white rounded-full"
-                      : "bg-brand-gradient-faint text-[#B85E00] rounded-full"
-                  }
-                >
-                  All ({stats.total})
-                </Button>
-                <Button
                   variant={statusFilter === "APPROVED" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setStatusFilter("APPROVED")}
+                  onClick={() => handleStatusFilterChange("APPROVED")}
                   className={
                     statusFilter === "APPROVED"
                       ? "bg-brand-gradient text-white rounded-full"
@@ -602,7 +596,7 @@ export default function SuperInstitutionAdminPage() {
                 <Button
                   variant={statusFilter === "PENDING" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setStatusFilter("PENDING")}
+                  onClick={() => handleStatusFilterChange("PENDING")}
                   className={
                     statusFilter === "PENDING"
                       ? "bg-brand-gradient text-white rounded-full"
@@ -614,7 +608,7 @@ export default function SuperInstitutionAdminPage() {
                 <Button
                   variant={statusFilter === "SUSPENDED" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setStatusFilter("SUSPENDED")}
+                  onClick={() => handleStatusFilterChange("SUSPENDED")}
                   className={
                     statusFilter === "SUSPENDED"
                       ? "bg-brand-gradient text-white rounded-full"
@@ -626,7 +620,7 @@ export default function SuperInstitutionAdminPage() {
                 <Button
                   variant={statusFilter === "REJECTED" ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setStatusFilter("REJECTED")}
+                  onClick={() => handleStatusFilterChange("REJECTED")}
                   className={
                     statusFilter === "REJECTED"
                       ? "bg-brand-gradient text-white rounded-full"

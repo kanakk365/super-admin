@@ -301,6 +301,14 @@ class ApiClient {
   async getFeatures(): Promise<ApiResponse<Feature[]>> {
     return this.get<ApiResponse<Feature[]>>(`/super-admin/features`);
   }
+
+  async updateOverallFeatures(featureData: {
+    key: string;
+    name: string;
+    description: string;
+  }): Promise<ApiResponse<{ message: string; feature: Feature }>> {
+    return this.post<ApiResponse<{ message: string; feature: Feature }>>(`/super-admin/features`, featureData);
+  }
 }
 
 // Create and export API client instance

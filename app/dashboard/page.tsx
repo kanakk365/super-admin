@@ -350,10 +350,10 @@ export default function Dashboard() {
         )}
 
         {/* Stats Grid (4 cards) */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {/* Institutions */}
           <Link href="/dashboard/institutions">
-            <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <Card className="border-0 bg-gray-50  hover:shadow-lg shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full flex items-center justify-center  ">
                   <Image
@@ -377,7 +377,7 @@ export default function Dashboard() {
           </Link>
           {/* Students */}
           <Link href="/dashboard/students">
-            <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <Card className="border-0 bg-gray-50  hover:shadow-lg shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer">
               <CardContent className="p-4 flex items-center gap-4">
                 <div className="h-12 w-12 rounded-full flex items-center justify-center bg-amber-50">
                   <Image
@@ -401,7 +401,7 @@ export default function Dashboard() {
           </Link>
           {/* Active Features */}
           <Link href="/dashboard/assignfeatures">
-            <Card className="border-0 bg-gray-50 shadow-none hover:shadow-lg hover:shadow-gray-200/50 hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <Card className="border-0 bg-gray-50  hover:shadow-lg shadow-md hover:-translate-y-1 transition-all duration-300 cursor-pointer">
               <CardContent className="p-4 flex items-center gap-4">
                 <Image
                   src="/active.svg"

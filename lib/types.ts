@@ -103,6 +103,7 @@ export interface Institution {
   updatedAt: string;
   addedById: string;
   mode?: InstitutionMode | null;
+  curriculumMode?: InstitutionMode | null;
 }
 
 // Institution Detail API Response Types

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
   Plus,
@@ -81,6 +81,7 @@ interface Institution {
   updatedAt: string;
   addedById: string;
   mode?: InstitutionMode | null;
+  curriculumMode?: InstitutionMode | null;
 }
 
 interface InstitutionsResponse {
@@ -123,6 +124,16 @@ interface InstitutionFormData {
 }
 
 const MODE_OPTIONS: InstitutionMode[] = ["GPT", "CBSE", "CAMBRIDGE"];
+
+const normalizeInstitution = (institution: Institution): Institution => {
+  const resolvedMode = institution.mode ?? institution.curriculumMode ?? null;
+
+  return {
+    ...institution,
+    mode: resolvedMode,
+    curriculumMode: institution.curriculumMode ?? resolvedMode,
+  };
+};
 
 function AccordionSection({
   title,
@@ -174,9 +185,9 @@ export default function InstitutionsPage() {
     useState<InstitutionSummaryResponse | null>(null);
   const [institutionStudentsBreakdown, setInstitutionStudentsBreakdown] =
     useState<InstitutionStudentsBreakdownResponse | null>(null);
-  const [institutionStats, setInstitutionStats] =
+  const [, setInstitutionStats] =
     useState<InstitutionStatsResponse | null>(null);
-  const [statsLoading, setStatsLoading] = useState(false);
+  const [, setStatsLoading] = useState(false);
   const [institutionFeatures, setInstitutionFeatures] = useState<
     InstitutionFeatureAssignment[] | null
   >(null);
@@ -198,7 +209,8 @@ export default function InstitutionsPage() {
     null
   );
 
-  const currentMode = selectedInstitution?.mode ?? null;
+  const currentMode =
+    selectedInstitution?.mode ?? selectedInstitution?.curriculumMode ?? null;
 
   // Students pagination state
   const [studentsPage, setStudentsPage] = useState(1);
@@ -279,17 +291,18 @@ export default function InstitutionsPage() {
       const data: InstitutionsResponse = await response.json();
 
       if (data.success) {
-        setInstitutions(data.data.data);
+        const normalizedInstitutions = data.data.data.map(normalizeInstitution);
+        setInstitutions(normalizedInstitutions);
 
         // Calculate stats
-        const total = data.data.data.length;
-        const approved = data.data.data.filter(
+        const total = normalizedInstitutions.length;
+        const approved = normalizedInstitutions.filter(
           (inst) => inst.approvalStatus === "APPROVED"
         ).length;
-        const pending = data.data.data.filter(
+        const pending = normalizedInstitutions.filter(
           (inst) => inst.approvalStatus === "PENDING"
         ).length;
-        const rejected = data.data.data.filter(
+        const rejected = normalizedInstitutions.filter(
           (inst) => inst.approvalStatus === "REJECTED"
         ).length;
 
@@ -473,7 +486,10 @@ export default function InstitutionsPage() {
           );
 
           if (institutionResponse.success && institutionResponse.data) {
-            setSelectedInstitution(institutionResponse.data);
+            const normalizedInstitution = normalizeInstitution(
+              institutionResponse.data
+            );
+            setSelectedInstitution(normalizedInstitution);
 
             // Fetch additional institution data in parallel
             const [
@@ -555,25 +571,28 @@ export default function InstitutionsPage() {
           );
 
           if (institutionResponse.success && institutionResponse.data) {
-            setSelectedInstitution(institutionResponse.data);
+            const normalizedInstitution = normalizeInstitution(
+              institutionResponse.data
+            );
+            setSelectedInstitution(normalizedInstitution);
 
             // Pre-populate form with institution data
             setFormData({
-              name: institutionResponse.data.name,
-              type: institutionResponse.data.type,
-              affiliatedBoard: institutionResponse.data.affiliatedBoard,
-              email: institutionResponse.data.email,
-              phone: institutionResponse.data.phone,
-              website: institutionResponse.data.website || "",
-              yearOfEstablishment: institutionResponse.data.yearOfEstablishment,
+              name: normalizedInstitution.name,
+              type: normalizedInstitution.type,
+              affiliatedBoard: normalizedInstitution.affiliatedBoard,
+              email: normalizedInstitution.email,
+              phone: normalizedInstitution.phone,
+              website: normalizedInstitution.website || "",
+              yearOfEstablishment: normalizedInstitution.yearOfEstablishment,
               totalStudentStrength:
-                institutionResponse.data.totalStudentStrength.toString(),
-              address: institutionResponse.data.address,
+                normalizedInstitution.totalStudentStrength.toString(),
+              address: normalizedInstitution.address,
               proofOfInstitution: null,
               logo: null,
-              primaryColor: institutionResponse.data.primaryColor || "#ffffff",
+              primaryColor: normalizedInstitution.primaryColor || "#ffffff",
               secondaryColor:
-                institutionResponse.data.secondaryColor || "#ffffff",
+                normalizedInstitution.secondaryColor || "#ffffff",
               password: "", // Don't pre-populate password for security
             });
 
@@ -839,14 +858,18 @@ export default function InstitutionsPage() {
 
         setSelectedInstitution((prev) =>
           prev && prev.id === institutionId
-            ? { ...prev, mode: updatedMode }
+            ? { ...prev, mode: updatedMode, curriculumMode: updatedMode }
             : prev
         );
 
         setInstitutions((prev) =>
           prev.map((institution) =>
             institution.id === institutionId
-              ? { ...institution, mode: updatedMode }
+              ? {
+                  ...institution,
+                  mode: updatedMode,
+                  curriculumMode: updatedMode,
+                }
               : institution
           )
         );
@@ -2280,6 +2303,14 @@ export default function InstitutionsPage() {
                             </div>
                             <div>
                               <div className="text-sm text-gray-600 mb-1">
+                                Curriculum Mode
+                              </div>
+                              <div className="font-medium text-gray-900">
+                                {currentMode ?? "-"}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-sm text-gray-600 mb-1">
                                 Status
                               </div>
                               <ApprovalStatusPill
@@ -2375,7 +2406,7 @@ export default function InstitutionsPage() {
                         <div className="space-y-4">
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-gray-700">
-                              Current mode:
+                              Curriculum mode:
                             </span>
                             <Badge variant="secondary">
                               {currentMode ?? "Not set"}

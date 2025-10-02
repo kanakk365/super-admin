@@ -46,6 +46,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { ApprovalStatusPill } from "@/components/ApprovalStatusPill";
 
 import { handleApiError, apiClient } from "@/lib/api";
 import type {
@@ -2020,26 +2021,19 @@ export default function InstitutionsPage() {
 
                                   {/* Status Column */}
                                   <TableCell className="px-4">
-                                    <div className="flex flex-col gap-1">
-                                      <Badge
-                                        className={`cursor-pointer hover:opacity-80 transition-opacity ${
-                                          institution.approvalStatus ===
-                                          "APPROVED"
-                                            ? "bg-transparent text-orange-600 border border-orange-400"
-                                            : institution.approvalStatus ===
-                                              "PENDING"
-                                            ? "bg-yellow-100 text-yellow-800 border border-yellow-400"
-                                            : "bg-red-100 text-red-800 border border-red-400"
-                                        }`}
+                                    <div className="flex flex-col gap-1.5">
+                                      <ApprovalStatusPill
+                                        status={institution.approvalStatus}
                                         onClick={() => {
                                           setInstitutionToApprove(institution);
                                           setApprovalModalOpen(true);
                                         }}
-                                      >
-                                        {institution.approvalStatus}
-                                      </Badge>
+                                        showHint
+                                        hintOverride="Click to change status"
+                                        size="sm"
+                                      />
                                       {institution.isSuspended && (
-                                        <div className="mt-1">
+                                        <div>
                                           <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                                             <span className="inline-block h-1 w-1 rounded-full bg-red-500 mr-1"></span>
                                             Suspended
@@ -2288,20 +2282,15 @@ export default function InstitutionsPage() {
                               <div className="text-sm text-gray-600 mb-1">
                                 Status
                               </div>
-                              <div className="font-medium text-gray-900 flex items-center">
-                                <span
-                                  className={`inline-block h-2 w-2 rounded-full mr-2 ${
-                                    selectedInstitution.approvalStatus ===
-                                    "APPROVED"
-                                      ? "bg-green-500"
-                                      : selectedInstitution.approvalStatus ===
-                                        "PENDING"
-                                      ? "bg-yellow-500"
-                                      : "bg-red-500"
-                                  }`}
-                                ></span>
-                                {selectedInstitution.approvalStatus}
-                              </div>
+                              <ApprovalStatusPill
+                                status={selectedInstitution.approvalStatus}
+                                onClick={() => {
+                                  setInstitutionToApprove(selectedInstitution);
+                                  setApprovalModalOpen(true);
+                                }}
+                                showHint
+                                hintOverride="Review or update status"
+                              />
                               <div className="mt-2">
                                 {selectedInstitution.isSuspended && (
                                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">

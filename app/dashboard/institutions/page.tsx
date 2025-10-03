@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import {
   Plus,
@@ -123,7 +123,16 @@ interface InstitutionFormData {
   password: string;
 }
 
-const MODE_OPTIONS: InstitutionMode[] = ["GPT", "CBSE", "CAMBRIDGE"];
+const DEFAULT_MODE_OPTIONS: InstitutionMode[] = [
+  "GPT",
+  "CBSE",
+  "CAMBRIDGE",
+];
+
+const BOARD_MODE_OPTIONS: Record<string, InstitutionMode[]> = {
+  CBSE: ["GPT", "CBSE"],
+  CAMBRIDGE: ["GPT", "CAMBRIDGE"],
+};
 
 const normalizeInstitution = (institution: Institution): Institution => {
   const resolvedMode = institution.mode ?? institution.curriculumMode ?? null;
@@ -211,6 +220,18 @@ export default function InstitutionsPage() {
 
   const currentMode =
     selectedInstitution?.mode ?? selectedInstitution?.curriculumMode ?? null;
+
+  const modeOptions = useMemo<InstitutionMode[]>(() => {
+    const board = selectedInstitution?.affiliatedBoard
+      ?.trim()
+      .toUpperCase();
+
+    if (!board) {
+      return DEFAULT_MODE_OPTIONS;
+    }
+
+    return BOARD_MODE_OPTIONS[board] ?? DEFAULT_MODE_OPTIONS;
+  }, [selectedInstitution?.affiliatedBoard]);
 
   // Students pagination state
   const [studentsPage, setStudentsPage] = useState(1);
@@ -837,6 +858,14 @@ export default function InstitutionsPage() {
 
     if (currentMode === mode) {
       setModeUpdateError(null);
+      setModeUpdateSuccess(null);
+      return;
+    }
+
+    if (!modeOptions.includes(mode)) {
+      setModeUpdateError(
+        "Selected mode isn't available for this institution's board."
+      );
       setModeUpdateSuccess(null);
       return;
     }
@@ -2416,7 +2445,7 @@ export default function InstitutionsPage() {
                             Choose the curriculum mode to align content and assessments for this institution.
                           </p>
                           <div className="flex flex-wrap gap-3">
-                            {MODE_OPTIONS.map((modeOption) => {
+                            {modeOptions.map((modeOption) => {
                               const isActive = currentMode === modeOption;
 
                               return (

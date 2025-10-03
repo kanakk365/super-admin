@@ -343,7 +343,12 @@ export default function InstitutionsPage() {
   const handleCreateInstitution = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.affiliatedBoard
+    ) {
       setError("Please fill in all required fields");
       return;
     }
@@ -676,7 +681,12 @@ export default function InstitutionsPage() {
 
     if (!selectedInstitution) return;
 
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.affiliatedBoard
+    ) {
       setError("Please fill in all required fields");
       return;
     }
@@ -1163,22 +1173,30 @@ export default function InstitutionsPage() {
                     >
                       Affiliated Board/University
                     </Label>
-                    <Input
-                      id="edit-affiliatedBoard"
-                      placeholder="Enter affiliated board"
-                      value={formData.affiliatedBoard}
-                      onChange={(e) =>
+                    <Select
+                      value={formData.affiliatedBoard || undefined}
+                      onValueChange={(value) =>
                         setFormData((prev) => ({
                           ...prev,
-                          affiliatedBoard: e.target.value,
+                          affiliatedBoard: value,
                         }))
                       }
-                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
-                      }}
-                    />
+                    >
+                      <SelectTrigger
+                        id="edit-affiliatedBoard"
+                        className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                        }}
+                      >
+                        <SelectValue placeholder="Select affiliated board" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CBSE">CBSE</SelectItem>
+                        <SelectItem value="CAMBRIDGE">CAMBRIDGE</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Official Phone Number / Landline */}
@@ -1534,22 +1552,30 @@ export default function InstitutionsPage() {
                     >
                       Affiliated Board/University
                     </Label>
-                    <Input
-                      id="affiliatedBoard"
-                      placeholder="Enter affiliated board"
-                      value={formData.affiliatedBoard}
-                      onChange={(e) =>
+                    <Select
+                      value={formData.affiliatedBoard || undefined}
+                      onValueChange={(value) =>
                         setFormData((prev) => ({
                           ...prev,
-                          affiliatedBoard: e.target.value,
+                          affiliatedBoard: value,
                         }))
                       }
-                      className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
-                      style={{
-                        background:
-                          "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
-                      }}
-                    />
+                    >
+                      <SelectTrigger
+                        id="affiliatedBoard"
+                        className="h-11 border-0 focus:border-orange-400 focus:ring-orange-400"
+                        style={{
+                          background:
+                            "linear-gradient(90deg, rgba(255,179,31,0.15) 6.54%, rgba(255,73,73,0.15) 90.65%)",
+                        }}
+                      >
+                        <SelectValue placeholder="Select affiliated board" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="CBSE">CBSE</SelectItem>
+                        <SelectItem value="CAMBRIDGE">CAMBRIDGE</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Official Phone Number / Landline */}

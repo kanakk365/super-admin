@@ -47,15 +47,16 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { ApprovalStatusPill } from "@/components/ApprovalStatusPill";
+import InstitutionAnalyticsSection from "@/components/InstitutionAnalyticsSection";
 
 import { handleApiError, apiClient } from "@/lib/api";
 import type {
   InstitutionStudentsResponse,
-  InstitutionSummaryResponse,
   InstitutionStudentsBreakdownResponse,
   InstitutionStatsResponse,
   InstitutionFeatureAssignment,
   InstitutionMode,
+  InstitutionAnalytics,
 } from "@/lib/types";
 
 interface Institution {
@@ -190,8 +191,12 @@ export default function InstitutionsPage() {
   // Institution detail data
   const [institutionStudents, setInstitutionStudents] =
     useState<InstitutionStudentsResponse | null>(null);
-  const [institutionSummary, setInstitutionSummary] =
-    useState<InstitutionSummaryResponse | null>(null);
+  const [institutionAnalytics, setInstitutionAnalytics] =
+    useState<InstitutionAnalytics | null>(null);
+  const [institutionAnalyticsLoading, setInstitutionAnalyticsLoading] =
+    useState(false);
+  const [institutionAnalyticsError, setInstitutionAnalyticsError] =
+    useState<string | null>(null);
   const [institutionStudentsBreakdown, setInstitutionStudentsBreakdown] =
     useState<InstitutionStudentsBreakdownResponse | null>(null);
   const [, setInstitutionStats] =
@@ -516,28 +521,20 @@ export default function InstitutionsPage() {
               institutionResponse.data
             );
             setSelectedInstitution(normalizedInstitution);
+            setInstitutionAnalytics(null);
+            setInstitutionAnalyticsError(null);
+            void loadInstitutionAnalytics(institutionId);
 
             // Fetch additional institution data in parallel
             const [
-              summaryResponse,
               breakdownResponse,
               statsResponse,
               featuresResponse,
             ] = await Promise.allSettled([
-              apiClient.getInstitutionSummary(institutionId),
               apiClient.getInstitutionStudentsBreakdown(institutionId),
               apiClient.getInstitutionStats(institutionId),
               apiClient.getInstitutionFeatures(institutionId),
             ]);
-
-            // Handle summary data
-            if (
-              summaryResponse.status === "fulfilled" &&
-              summaryResponse.value.success &&
-              summaryResponse.value.data
-            ) {
-              setInstitutionSummary(summaryResponse.value.data!);
-            }
 
             // Handle breakdown data
             if (
@@ -662,6 +659,27 @@ export default function InstitutionsPage() {
     },
     [studentsPageSize]
   );
+
+  const loadInstitutionAnalytics = useCallback(async (institutionId: string) => {
+    try {
+      setInstitutionAnalyticsLoading(true);
+      setInstitutionAnalyticsError(null);
+      const response = await apiClient.getInstitutionAnalytics(institutionId);
+      if (response.success && response.data) {
+        setInstitutionAnalytics(response.data);
+      } else {
+        setInstitutionAnalytics(null);
+        setInstitutionAnalyticsError(
+          response.message || "Failed to fetch analytics data."
+        );
+      }
+    } catch (err) {
+      setInstitutionAnalytics(null);
+      setInstitutionAnalyticsError(handleApiError(err));
+    } finally {
+      setInstitutionAnalyticsLoading(false);
+    }
+  }, []);
 
   // When grade filter changes, reset page client-side only
   useEffect(() => {
@@ -979,7 +997,9 @@ export default function InstitutionsPage() {
   const handleBackToList = () => {
     setSelectedInstitution(null);
     setInstitutionStudents(null);
-    setInstitutionSummary(null);
+    setInstitutionAnalytics(null);
+    setInstitutionAnalyticsError(null);
+    setInstitutionAnalyticsLoading(false);
     setInstitutionStudentsBreakdown(null);
     setInstitutionStats(null);
     setStudentsPage(1);
@@ -2654,486 +2674,19 @@ export default function InstitutionsPage() {
                         )}
                       </AccordionSection>
 
-                      <AccordionSection title="Admin Users">
-                        <p className="text-sm text-gray-600">Coming soon</p>
-                      </AccordionSection>
-
-                      <AccordionSection title="Student details" defaultOpen>
-                        {institutionStudentsBreakdown ? (
-                          <div className="space-y-6">
-                            {/* Students Breakdown */}
-                            <div className="space-y-4">
-                              <h4 className="text-sm font-medium text-gray-900">
-                                Students Breakdown
-                              </h4>
-
-                              {/* By Class */}
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-2">
-                                  By Class
-                                </h5>
-                                <div className="grid gap-2">
-                                  {institutionStudentsBreakdown.byClass.map(
-                                    (classItem) => (
-                                      <div
-                                        key={classItem.standardId}
-                                        className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
-                                      >
-                                        <span className="text-sm text-gray-900">
-                                          {classItem.standardName}
-                                        </span>
-                                        <Badge variant="secondary">
-                                          {classItem.count} students
-                                        </Badge>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* By Section */}
-                              <div>
-                                <h5 className="text-sm font-medium text-gray-700 mb-2">
-                                  By Section
-                                </h5>
-                                <div className="grid gap-2">
-                                  {institutionStudentsBreakdown.bySection.map(
-                                    (sectionItem) => (
-                                      <div
-                                        key={sectionItem.sectionId}
-                                        className="flex justify-between items-center p-3 bg-gray-50 rounded-md"
-                                      >
-                                        <span className="text-sm text-gray-900">
-                                          {sectionItem.sectionName}
-                                        </span>
-                                        <Badge variant="secondary">
-                                          {sectionItem.count} students
-                                        </Badge>
-                                      </div>
-                                    )
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Students List */}
-                            <div className="space-y-4">
-                              <div className="flex items-center justify-between">
-                                <h4 className="text-sm font-medium text-gray-900">
-                                  Students{" "}
-                                  {institutionStudents
-                                    ? `(${(selectedGrade === "ALL" ? institutionStudents.data : institutionStudents.data.filter((s) => s.grade === selectedGrade)).length})`
-                                    : ""}
-                                </h4>
-                                {studentsLoading && (
-                                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
-                                    Loading...
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Grade Filter */}
-                              <div className="flex items-center gap-2">
-                                <Label htmlFor="grade-filter" className="text-sm font-medium">
-                                  Filter by Grade:
-                                </Label>
-                                <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                                  <SelectTrigger className="w-48 h-11">
-                                    <SelectValue placeholder="Select grade" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="ALL">All Grades</SelectItem>
-                                    {institutionStudents && Array.from(new Set(institutionStudents.data.map(student => student.grade).filter((grade): grade is string => Boolean(grade)))).map(grade => (
-                                      <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                {selectedGrade !== "ALL" && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setSelectedGrade("ALL")}
-                                    className="h-11"
-                                  >
-                                    <X className="h-4 w-4" />
-                                    Clear
-                                  </Button>
-                                )}
-                              </div>
-
-                              {institutionStudents ? (
-                                <>
-                                  <div className="border rounded-lg overflow-hidden">
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow className="bg-brand-gradient text-white">
-                                          <TableHead className="text-white min-w-[200px] px-4">
-                                            Name
-                                          </TableHead>
-                                          <TableHead className="text-white min-w-[200px] px-4">
-                                            Email
-                                          </TableHead>
-                                          <TableHead className="text-white min-w-[150px] px-4">
-                                            Phone
-                                          </TableHead>
-                                          <TableHead className="text-white min-w-[100px] px-4">
-                                            Grade
-                                          </TableHead>
-                                          <TableHead className="text-white min-w-[120px] px-4">
-                                            Joined
-                                          </TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {(selectedGrade === "ALL"
-                                          ? institutionStudents.data
-                                          : institutionStudents.data.filter((s) => s.grade === selectedGrade)
-                                        ).map(
-                                          (student) => (
-                                            <TableRow
-                                              key={student.id}
-                                              className="hover:bg-gray-50"
-                                            >
-                                              <TableCell className="px-4">
-                                                <div>
-                                                  <h3 className="text-base text-gray-900 mb-1">
-                                                    {student.firstName}{" "}
-                                                    {student.lastName}
-                                                  </h3>
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="px-4">
-                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                  <Mail className="h-4 w-4 flex-shrink-0" />
-                                                  <span className="truncate min-w-0">
-                                                    {student.email}
-                                                  </span>
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="px-4">
-                                                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                                                  <Phone className="h-4 w-4 flex-shrink-0" />
-                                                  <span>{student.phone}</span>
-                                                </div>
-                                              </TableCell>
-                                              <TableCell className="px-4">
-                                                <Badge variant="outline" className="text-xs">
-                                                  {student.grade}
-                                                </Badge>
-                                              </TableCell>
-                                              <TableCell className="px-4 text-sm text-gray-600">
-                                                {formatDate(student.createdAt)}
-                                              </TableCell>
-                                            </TableRow>
-                                          )
-                                        )}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-
-                                  {/* Pagination Controls */}
-                                  {institutionStudents.meta.totalPages > 1 && (
-                                    <div className="flex flex-col gap-4 p-4 bg-gray-50 border-t">
-                                      {/* Pagination Info */}
-                                      <div className="text-xs text-gray-500 text-center">
-                                        Showing{" "}
-                                        {(institutionStudents.meta.page - 1) *
-                                          institutionStudents.meta.limit +
-                                          1}{" "}
-                                        to{" "}
-                                        {Math.min(
-                                          institutionStudents.meta.page *
-                                            institutionStudents.meta.limit,
-                                          institutionStudents.meta.total
-                                        )}{" "}
-                                        of {institutionStudents.meta.total}{" "}
-                                        students
-                                      </div>
-
-                                      {/* Page Navigation */}
-                                      <div className="flex items-center justify-center gap-2">
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleStudentsPageChange(
-                                              studentsPage - 1
-                                            )
-                                          }
-                                          disabled={
-                                            studentsPage === 1 ||
-                                            studentsLoading
-                                          }
-                                          className="h-8"
-                                        >
-                                          <ChevronLeft className="h-4 w-4" />
-                                          Previous
-                                        </Button>
-
-                                        <div className="flex items-center gap-1">
-                                          {/* Show page numbers - limited to 5 pages max */}
-                                          {Array.from(
-                                            {
-                                              length: Math.min(
-                                                5,
-                                                institutionStudents.meta
-                                                  .totalPages
-                                              ),
-                                            },
-                                            (_, i) => {
-                                              let pageNumber;
-                                              if (
-                                                institutionStudents.meta
-                                                  .totalPages <= 5
-                                              ) {
-                                                pageNumber = i + 1;
-                                              } else if (studentsPage <= 3) {
-                                                pageNumber = i + 1;
-                                              } else if (
-                                                studentsPage >=
-                                                institutionStudents.meta
-                                                  .totalPages -
-                                                  2
-                                              ) {
-                                                pageNumber =
-                                                  institutionStudents.meta
-                                                    .totalPages -
-                                                  4 +
-                                                  i;
-                                              } else {
-                                                pageNumber =
-                                                  studentsPage - 2 + i;
-                                              }
-
-                                              return (
-                                                <Button
-                                                  key={pageNumber}
-                                                  variant={
-                                                    studentsPage === pageNumber
-                                                      ? "default"
-                                                      : "outline"
-                                                  }
-                                                  size="sm"
-                                                  onClick={() =>
-                                                    handleStudentsPageChange(
-                                                      pageNumber
-                                                    )
-                                                  }
-                                                  disabled={studentsLoading}
-                                                  className={`h-8 w-8 p-0 ${
-                                                    studentsPage === pageNumber
-                                                      ? "bg-brand-gradient text-white"
-                                                      : ""
-                                                  }`}
-                                                >
-                                                  {pageNumber}
-                                                </Button>
-                                              );
-                                            }
-                                          )}
-                                        </div>
-
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleStudentsPageChange(
-                                              studentsPage + 1
-                                            )
-                                          }
-                                          disabled={
-                                            studentsPage ===
-                                              institutionStudents.meta
-                                                .totalPages || studentsLoading
-                                          }
-                                          className="h-8"
-                                        >
-                                          Next
-                                          <ChevronRight className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </>
-                              ) : (
-                                <div className="flex items-center justify-center py-8">
-                                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                          </div>
-                        )}
-                      </AccordionSection>
+              
 
                       <AccordionSection title="Analytics summary">
-                        {institutionSummary ? (
-                          <div className="space-y-6">
-                            {/* Institution Metrics */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-4">
-                                Institution Statistics
-                              </h4>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-blue-600">
-                                    {institutionSummary.totals.students}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    Total Students
-                                  </div>
-                                </div>
-                                <div className="text-center p-4 bg-green-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-green-600">
-                                    {institutionSummary.totals.quizzes}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    Total Quizzes
-                                  </div>
-                                </div>
-                                <div className="text-center p-4 bg-yellow-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-yellow-600">
-                                    {institutionSummary.totals.exams}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    Total Exams
-                                  </div>
-                                </div>
-                                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                                  <div className="text-2xl font-bold text-purple-600">
-                                    {institutionSummary.totals.projects}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    Total Projects
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Completion Rates */}
-                            <div>
-                              <h4 className="text-sm font-medium text-gray-900 mb-4">
-                                Completion Rates
-                              </h4>
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="p-4 bg-gray-50 rounded-lg">
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">
-                                      Quiz Submissions
-                                    </span>
-                                    <span className="text-sm font-medium">
-                                      {
-                                        institutionSummary.totals
-                                          .quizSubmissions
-                                      }
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-green-500 h-2 rounded-full"
-                                      style={{
-                                        width: `${
-                                          institutionSummary.totals.quizzes > 0
-                                            ? (institutionSummary.totals
-                                                .quizSubmissions /
-                                                institutionSummary.totals
-                                                  .quizzes) *
-                                              100
-                                            : 0
-                                        }%`,
-                                      }}
-                                    ></div>
-                                  </div>
-                                </div>
-
-                                <div className="p-4 bg-gray-50 rounded-lg">
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">
-                                      Completed Exams
-                                    </span>
-                                    <span className="text-sm font-medium">
-                                      {institutionSummary.totals.completedExams}
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-blue-500 h-2 rounded-full"
-                                      style={{
-                                        width: `${
-                                          institutionSummary.totals.exams > 0
-                                            ? (institutionSummary.totals
-                                                .completedExams /
-                                                institutionSummary.totals
-                                                  .exams) *
-                                              100
-                                            : 0
-                                        }%`,
-                                      }}
-                                    ></div>
-                                  </div>
-                                </div>
-
-                                <div className="p-4 bg-gray-50 rounded-lg">
-                                  <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm text-gray-600">
-                                      Completed Projects
-                                    </span>
-                                    <span className="text-sm font-medium">
-                                      {
-                                        institutionSummary.totals
-                                          .completedProjects
-                                      }
-                                    </span>
-                                  </div>
-                                  <div className="w-full bg-gray-200 rounded-full h-2">
-                                    <div
-                                      className="bg-orange-500 h-2 rounded-full"
-                                      style={{
-                                        width: `${
-                                          institutionSummary.totals.projects > 0
-                                            ? (institutionSummary.totals
-                                                .completedProjects /
-                                                institutionSummary.totals
-                                                  .projects) *
-                                              100
-                                            : 0
-                                        }%`,
-                                      }}
-                                    ></div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Institution Timeline */}
-                            <div className="grid md:grid-cols-2 gap-4 text-sm border-t pt-4">
-                              <div>
-                                <div className="text-gray-600 mb-1">
-                                  Created
-                                </div>
-                                <div className="font-medium">
-                                  {formatDate(selectedInstitution.createdAt)}
-                                </div>
-                              </div>
-                              <div>
-                                <div className="text-gray-600 mb-1">
-                                  Last Updated
-                                </div>
-                                <div className="font-medium">
-                                  {formatDate(selectedInstitution.updatedAt)}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-center justify-center py-8">
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-                          </div>
-                        )}
+                        <InstitutionAnalyticsSection
+                          data={institutionAnalytics}
+                          isLoading={institutionAnalyticsLoading}
+                          error={institutionAnalyticsError}
+                          onRetry={
+                            selectedInstitution
+                              ? () => loadInstitutionAnalytics(selectedInstitution.id)
+                              : undefined
+                          }
+                        />
                       </AccordionSection>
                     </div>
 

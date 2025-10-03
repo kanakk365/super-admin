@@ -312,6 +312,62 @@ export interface InstitutionStatsResponse {
   };
 }
 
+export interface SubjectCountSummary {
+  topic?: string;
+  subject?: string;
+  _count?: number;
+  count?: number;
+}
+
+export interface InstitutionAnalyticsSummaryMetric {
+  count: number;
+  changeFromLastMonth: number;
+}
+
+export interface InstitutionAnalyticsSummarySection {
+  totalStudents: InstitutionAnalyticsSummaryMetric;
+  totalGrades: InstitutionAnalyticsSummaryMetric;
+  totalSections: InstitutionAnalyticsSummaryMetric;
+  totalTeachers: InstitutionAnalyticsSummaryMetric;
+}
+
+export interface InstitutionAnalyticsSubjectPerformance {
+  subject: string;
+  excellent: number;
+  good: number;
+  normal: number;
+  dull: number;
+  total: number;
+}
+
+export interface InstitutionAnalyticsStatisticsGroup {
+  examsBySubject: SubjectCountSummary[];
+  quizzesBySubject: SubjectCountSummary[];
+  projectsBySubject: SubjectCountSummary[];
+  customizedExamsBySubject: SubjectCountSummary[];
+  customizedQuizzesBySubject: SubjectCountSummary[];
+}
+
+export interface InstitutionAnalyticsStudent {
+  id: string;
+  name: string;
+  grade: string;
+  section: string;
+  email: string;
+  totalScore: string;
+  attendance: string;
+  status: string;
+  lastActive: string;
+}
+
+export interface InstitutionAnalytics {
+  summary: InstitutionAnalyticsSummarySection;
+  performanceBySubject: InstitutionAnalyticsSubjectPerformance[];
+  totalStatistics: InstitutionAnalyticsStatisticsGroup;
+  todayStatistics: InstitutionAnalyticsStatisticsGroup;
+  students: InstitutionAnalyticsStudent[];
+}
+
 // Student Activity Types
 export interface StudentActivityResponse {
   student: {

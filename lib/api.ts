@@ -24,6 +24,7 @@ export const API_CONFIG = {
     HEALTH: "/super-admin/health",
     ANALYTICS: {
       MONTHLY: "/super-admin/analytics/monthly", // Assumed endpoint for monthly metrics
+      INSTITUTION: "/analytics/institution",
     },
   },
 };
@@ -43,6 +44,7 @@ import type {
   InstitutionSummaryResponse,
   InstitutionStudentsBreakdownResponse,
   InstitutionStatsResponse,
+  InstitutionAnalytics,
   StudentActivityResponse,
   Member,
   Feature,
@@ -246,6 +248,10 @@ class ApiClient {
 
   async getInstitutionStats(institutionId: string): Promise<ApiResponse<InstitutionStatsResponse>> {
     return this.get<ApiResponse<InstitutionStatsResponse>>(`${API_CONFIG.ENDPOINTS.INSTITUTION_STATS}/${institutionId}/stats`);
+  }
+
+  async getInstitutionAnalytics(institutionId: string): Promise<ApiResponse<InstitutionAnalytics>> {
+    return this.get<ApiResponse<InstitutionAnalytics>>(`${API_CONFIG.ENDPOINTS.ANALYTICS.INSTITUTION}/${institutionId}`);
   }
 
   async updateInstitution(institutionId: string, data: Partial<Institution>): Promise<ApiResponse<Institution>> {
